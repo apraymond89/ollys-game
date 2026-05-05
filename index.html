@@ -8,6 +8,18 @@
     *{box-sizing:border-box;margin:0;padding:0;}
     body{background:#0a0020;font-family:sans-serif;}
     #root{min-height:100vh;}
+    /* ── Mobile layout: fit everything in one screen ── */
+    @media(max-width:600px){
+      .gs-root{height:100dvh;min-height:unset!important;overflow:hidden!important;padding:6px!important;display:flex!important;flex-direction:column;}
+      .gs-inner{flex:1;min-height:0;display:flex!important;flex-direction:column!important;overflow:hidden;}
+      .gs-board{padding:3px!important;}
+      .gs-board-name{font-size:11px!important;margin-bottom:2px!important;}
+      .gs-board-grid{gap:1px!important;}
+      .gs-tile{aspect-ratio:unset!important;height:25px!important;}
+      .gs-board-footer{font-size:10px!important;margin-top:2px!important;}
+      .gs-question-wrap{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:5px!important;}
+      .gs-question-card{padding:10px 10px!important;border-radius:14px!important;}
+    }
   </style>
   <!-- CDN dependencies — no build step neded -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
@@ -221,12 +233,12 @@ function BoardGrid({position,targetPosition,character,onDone,isSpace}){
   var zone=isSpace?getSpaceZone(disp):getContinent(disp);
   var lm=isSpace?{5:"🚀",10:"🌍",15:"☀️",20:"🌙",25:"🔴",30:"☄️",35:"🪐",40:"💫",45:"🪐",50:"⭐",55:"🌌",60:"🔵",65:"❄️",70:"🌠",75:"🌌",80:"🔭",85:"👾",90:"🌟",95:"🛸",100:"🏆"}:{10:"🗽",20:"🌊",30:"🗼",40:"🌍",50:"🕌",60:"🏯",70:"🐋",80:"🦘",90:"🌏",100:"🏆"};
   var cells=[];for(var r=0;r<10;r++)for(var co=0;co<10;co++)cells.push(r%2===0?r*10+co+1:r*10+(9-co)+1);
-  return(<div style={{borderRadius:16,padding:8,border:"3px solid rgba(255,255,255,0.25)",background:`linear-gradient(135deg,${zone.color}dd,${zone.tile}dd)`,boxShadow:"0 4px 20px rgba(0,0,0,0.5)",transition:"background 0.8s"}}>
-    <div style={{textAlign:"center",fontSize:13,fontWeight:"bold",color:"rgba(255,255,255,0.95)",marginBottom:4}}>{zone.emoji} {zone.name}</div>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(10,1fr)",gap:2}}>
-      {cells.map(n=>{var ip=n===disp,iv=n<disp,l=lm[n];return <div key={n} style={{aspectRatio:"1",borderRadius:3,display:"flex",alignItems:"center",justifyContent:"center",fontSize:ip?16:l?10:8,background:ip?"rgba(255,255,255,0.95)":iv?(zone.tile+"bb"):(zone.tile+"44"),border:ip?"2px solid #fff":"1px solid rgba(255,255,255,0.15)",boxShadow:ip?"0 0 10px rgba(255,255,255,0.9)":"none",transform:ip?"scale(1.25)":"scale(1)",transition:"all 0.15s"}}>{ip?character.emoji:l?l:<span style={{fontSize:7,opacity:iv?.9:.5,color:"white",fontWeight:"bold"}}>{n}</span>}</div>;})}
+  return(<div className="gs-board" style={{borderRadius:16,padding:8,border:"3px solid rgba(255,255,255,0.25)",background:`linear-gradient(135deg,${zone.color}dd,${zone.tile}dd)`,boxShadow:"0 4px 20px rgba(0,0,0,0.5)",transition:"background 0.8s"}}>
+    <div className="gs-board-name" style={{textAlign:"center",fontSize:13,fontWeight:"bold",color:"rgba(255,255,255,0.95)",marginBottom:4}}>{zone.emoji} {zone.name}</div>
+    <div className="gs-board-grid" style={{display:"grid",gridTemplateColumns:"repeat(10,1fr)",gap:2}}>
+      {cells.map(n=>{var ip=n===disp,iv=n<disp,l=lm[n];return <div className="gs-tile" key={n} style={{aspectRatio:"1",borderRadius:3,display:"flex",alignItems:"center",justifyContent:"center",fontSize:ip?16:l?10:8,background:ip?"rgba(255,255,255,0.95)":iv?(zone.tile+"bb"):(zone.tile+"44"),border:ip?"2px solid #fff":"1px solid rgba(255,255,255,0.15)",boxShadow:ip?"0 0 10px rgba(255,255,255,0.9)":"none",transform:ip?"scale(1.25)":"scale(1)",transition:"all 0.15s"}}>{ip?character.emoji:l?l:<span style={{fontSize:7,opacity:iv?.9:.5,color:"white",fontWeight:"bold"}}>{n}</span>}</div>;})}
     </div>
-    <div style={{textAlign:"center",marginTop:4,fontSize:11,color:"rgba(255,255,255,0.8)",fontWeight:"bold"}}>{isSpace?"Space":"Square"} {disp}/100</div>
+    <div className="gs-board-footer" style={{textAlign:"center",marginTop:4,fontSize:11,color:"rgba(255,255,255,0.8)",fontWeight:"bold"}}>{isSpace?"Space":"Square"} {disp}/100</div>
   </div>);
 }
 
@@ -295,16 +307,16 @@ function OllysGame(){
   if(screen==="win"){return(<div style={{minHeight:"100vh",background:isSpace?"linear-gradient(135deg,#0a0020,#4a148c,#1a0040)":"linear-gradient(135deg,#f6d365,#fda085)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"sans-serif"}}><CelebrationBlast active/>{isSpace&&<SpaceBg/>}<div style={{background:"white",borderRadius:24,padding:40,textAlign:"center",maxWidth:400,boxShadow:"0 20px 60px rgba(0,0,0,0.3)",zIndex:10,position:"relative"}}><div style={{fontSize:80}}>🏆</div><h1 style={{fontSize:28,color:"#333"}}>{isSpace?"Mission Complete!":"You Win!"} {character.emoji}</h1><p style={{fontSize:16,color:"#666"}}>Score: <strong style={{fontSize:22,color:"#27ae60"}}>{score}</strong> / <strong>{total}</strong></p><button onClick={()=>setScreen("start")} style={{marginTop:20,padding:"14px 40px",fontSize:18,borderRadius:16,border:"none",background:isSpace?"linear-gradient(135deg,#6a1b9a,#9c27b0)":"linear-gradient(135deg,#FF6B6B,#FF8E53)",color:"white",cursor:"pointer",fontWeight:"bold"}}>Play Again! 🚀</button></div></div>);}
 
   var cont=isSpace?null:getContinent(position);
-  return(<div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)",fontFamily:"sans-serif",padding:12,position:"relative"}}>
+  return(<div className="gs-root" style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)",fontFamily:"sans-serif",padding:12,position:"relative"}}>
     {isSpace?<SpaceBg/>:<GeoBg name={cont.bg}/>}
     {showSettings&&<SettingsMenu onClose={()=>setShowSettings(false)} onHome={()=>{setShowSettings(false);setScreen("start");}} onRestart={()=>{setShowSettings(false);startGame(gameMode,spaceSubMode);}}/>}
     <button onClick={()=>setShowSettings(true)} style={{position:"fixed",top:12,left:12,zIndex:50,fontSize:22,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer"}}>⚙️</button>
     <button onClick={()=>setMuted(Audio.toggleMute())} style={{position:"fixed",top:12,left:64,zIndex:50,fontSize:22,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer"}}>{muted?"🔇":"🔊"}</button>
-    <div style={{maxWidth:520,margin:"0 auto",position:"relative",zIndex:1}}>
+    <div className="gs-inner" style={{maxWidth:520,margin:"0 auto",position:"relative",zIndex:1}}>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,gap:6,paddingLeft:120}}>{[`${character.emoji} ${position}/100`,`Score: ${score}/${total}`].map(t=><div key={t} style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"5px 10px",color:"white",fontWeight:"bold",fontSize:13,flex:1,textAlign:"center"}}>{t}</div>)}</div>
       <BoardGrid position={position} targetPosition={targetPos} character={character} onDone={handleMoveDone} isSpace={isSpace}/>
-      <div style={{marginTop:10}}>
-        {q&&!moving&&(<div style={{background:"rgba(255,255,255,0.97)",borderRadius:20,padding:16,boxShadow:"0 8px 32px rgba(0,0,0,0.4)"}}>
+      <div className="gs-question-wrap" style={{marginTop:10}}>
+        {q&&!moving&&(<div className="gs-question-card" style={{background:"rgba(255,255,255,0.97)",borderRadius:20,padding:16,boxShadow:"0 8px 32px rgba(0,0,0,0.4)"}}>
           {showResult&&isCorrect&&(<div style={{textAlign:"center",marginBottom:12}}><p style={{color:"#27ae60",fontWeight:"bold",fontSize:18,marginBottom:8}}>🎉 Correct!</p><SpinnerWheel onResult={handleSpin}/>{q.funFact&&<div style={{marginTop:10,padding:"8px 12px",background:"#f0f8ff",borderRadius:10,border:"2px solid #b3d9ff",fontSize:13,color:"#1a5f8a",textAlign:"center"}}>💡 {q.funFact}</div>}<div style={{marginTop:10,display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>{q.options.map(o=>{var bg2=o.value===q.answer?"#C8F7C5":"#f5f5f5",brd=o.value===q.answer?"2px solid #27ae60":"2px solid #e0e0e0";return <div key={o.value} style={{padding:q.display==="bigflag"?"10px 4px":"8px 6px",fontSize:q.display==="bigflag"?32:13,borderRadius:10,border:brd,background:bg2,color:o.value===q.answer?"#1a7a40":"#aaa",fontWeight:o.value===q.answer?"bold":"normal",textAlign:"center"}}>{o.label}</div>;})}</div></div>)}
           {!showResult&&(<div><QMedia q={q}/><p style={{fontSize:15,fontWeight:"bold",color:"#333",textAlign:"center",marginBottom:12,lineHeight:1.4}}>{q.question}</p><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>{q.options.map(o=><button key={o.value} onClick={()=>handleAnswer(o.value)} style={{padding:q.display==="bigflag"?"16px 8px":"12px 8px",fontSize:q.display==="bigflag"?40:13,borderRadius:12,border:"2px solid #e0e0e0",background:"white",color:"#333",cursor:"pointer",fontWeight:"bold",lineHeight:1.3}}>{o.label}</button>)}</div></div>)}
           {showResult&&!isCorrect&&(<div><QMedia q={q}/><p style={{fontSize:15,fontWeight:"bold",color:"#333",textAlign:"center",marginBottom:10}}>{q.question}</p><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>{q.options.map(o=>{var bg2="white",brd="2px solid #e0e0e0";if(o.value===q.answer){bg2="#C8F7C5";brd="2px solid #27ae60";}else if(o.value===selected){bg2="#FADBD8";brd="2px solid #e74c3c";}return <button key={o.value} disabled style={{padding:q.display==="bigflag"?"16px 8px":"12px 8px",fontSize:q.display==="bigflag"?40:13,borderRadius:12,border:brd,background:bg2,color:"#333",fontWeight:"bold",lineHeight:1.3}}>{o.label}</button>;})}</div>{q.funFact&&<div style={{marginBottom:10,padding:"8px 12px",background:"#fff8e1",borderRadius:10,border:"2px solid #ffe082",fontSize:13,color:"#7a5a00",textAlign:"center"}}>💡 {q.funFact}</div>}<p style={{color:"#e74c3c",fontWeight:"bold",fontSize:15,textAlign:"center",marginBottom:4}}>Not quite! Keep going!</p><p style={{color:"#27ae60",fontSize:13,marginBottom:10,textAlign:"center"}}>Answer: <strong>{q.answer}</strong></p><button onClick={advanceQuestion} style={{padding:"11px 28px",fontSize:15,borderRadius:12,border:"none",background:"#FF6B6B",color:"white",cursor:"pointer",fontWeight:"bold",width:"100%"}}>Next Question</button></div>)}
