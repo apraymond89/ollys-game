@@ -19,6 +19,11 @@
       .gs-board-grid{gap:1px!important;}
       .gs-tile{aspect-ratio:unset!important;height:22px!important;}
       .gs-board-footer{display:none!important;}
+      .gs-root.gs-mode-question .gs-board{display:none!important;}
+      .gs-root.gs-mode-board .gs-board{display:block!important;}
+      .gs-const-svg{width:160px!important;height:130px!important;}
+      .gs-map-wrap{max-height:130px!important;overflow:hidden!important;}
+      .gs-country-shape svg,.gs-state-shape svg{width:160px!important;height:110px!important;}
       /* Question area */
       .gs-question-wrap{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:5px!important;}
       .gs-question-card{padding:10px!important;border-radius:14px!important;}
@@ -112,12 +117,12 @@ function generateGeoQuestion(types,cDecks,sDecks){
 function CountryShape({country,worldData}){
   var ref=useRef(null);
   useEffect(()=>{if(!worldData||!ref.current||!window.topojson)return;var w=220,h=160,svg=d3.select(ref.current);svg.selectAll("*").remove();svg.append("rect").attr("width",w).attr("height",h).attr("fill","#1a2a4a").attr("rx",8);var cs=window.topojson.feature(worldData,worldData.objects.countries);var f=cs.features.find(d=>String(d.id)===String(country.id));if(!f)f=cs.features.find(d=>d.properties&&d.properties.name===country.name);if(!f)return;try{var p=d3.geoMercator().fitExtent([[24,24],[w-24,h-24]],f);svg.append("path").datum(f).attr("d",d3.geoPath().projection(p)).attr("fill","#4ECDC4").attr("stroke","white").attr("stroke-width",1.5);}catch(e){}},[worldData,country]);
-  return <div style={{display:"flex",justifyContent:"center",marginBottom:8}}><svg ref={ref} width="220" height="160" viewBox="0 0 220 160" style={{display:"block",borderRadius:8,border:"2px solid #2196F3"}}/></div>;
+  return <div className="gs-country-shape" style={{display:"flex",justifyContent:"center",marginBottom:8}}><svg ref={ref} width="220" height="160" viewBox="0 0 220 160" style={{display:"block",borderRadius:8,border:"2px solid #2196F3"}}/></div>;
 }
 function StateShape({stateName,usData}){
   var ref=useRef(null);
   useEffect(()=>{if(!usData||!ref.current||!window.topojson||!stateName)return;var w=220,h=160,svg=d3.select(ref.current);svg.selectAll("*").remove();svg.append("rect").attr("width",w).attr("height",h).attr("fill","#1a2a4a").attr("rx",8);var ss=window.topojson.feature(usData,usData.objects.states);var fips=STATE_FIPS[stateName];var f=ss.features.find(d=>String(d.id)===fips);if(!f)return;try{var p=d3.geoAlbersUsa().fitExtent([[24,24],[w-24,h-24]],f);svg.append("path").datum(f).attr("d",d3.geoPath().projection(p)).attr("fill","#FF6B6B").attr("stroke","white").attr("stroke-width",1.5);}catch(e){try{var p2=d3.geoMercator().fitExtent([[24,24],[w-24,h-24]],f);svg.append("path").datum(f).attr("d",d3.geoPath().projection(p2)).attr("fill","#FF6B6B").attr("stroke","white").attr("stroke-width",1.5);}catch(e2){}}},[usData,stateName]);
-  return <div style={{display:"flex",justifyContent:"center",marginBottom:8}}><svg ref={ref} width="220" height="160" viewBox="0 0 220 160" style={{display:"block",borderRadius:8,border:"2px solid #FF6B6B"}}/></div>;
+  return <div className="gs-state-shape" style={{display:"flex",justifyContent:"center",marginBottom:8}}><svg ref={ref} width="220" height="160" viewBox="0 0 220 160" style={{display:"block",borderRadius:8,border:"2px solid #FF6B6B"}}/></div>;
 }
 
 function WorldMap({highlight,worldData}){
@@ -143,7 +148,7 @@ function WorldMap({highlight,worldData}){
       .attr("stroke","#1a4731").attr("stroke-width",d=>hlId&&String(d.id)===hlId?1.5:0.4);
   },[worldData,highlight,zoomed]);
   useEffect(()=>{if(!ref.current)return;d3.select(ref.current).selectAll(".highlighted").attr("fill",pulse?"#FFD700":"#FF8C00");},[pulse]);
-  return(<div style={{borderRadius:12,overflow:"hidden",marginBottom:8,border:"2px solid #2196F3",background:"#1565c0",position:"relative"}}><svg ref={ref} width="100%" viewBox="0 0 420 220" style={{display:"block"}}/><button onClick={()=>setZoomed(z=>!z)} style={{position:"absolute",bottom:6,right:6,padding:"4px 10px",fontSize:12,borderRadius:8,border:"none",background:"rgba(0,0,0,0.6)",color:"white",cursor:"pointer",fontWeight:"bold"}}>{zoomed?"World view":"Zoom in"}</button></div>);
+  return(<div className="gs-map-wrap" style={{borderRadius:12,overflow:"hidden",marginBottom:8,border:"2px solid #2196F3",background:"#1565c0",position:"relative"}}><svg ref={ref} width="100%" viewBox="0 0 420 220" style={{display:"block"}}/><button onClick={()=>setZoomed(z=>!z)} style={{position:"absolute",bottom:6,right:6,padding:"4px 10px",fontSize:12,borderRadius:8,border:"none",background:"rgba(0,0,0,0.6)",color:"white",cursor:"pointer",fontWeight:"bold"}}>{zoomed?"World view":"Zoom in"}</button></div>);
 }
 
 // ═══ PLANETS, MOONS, TRIVIA ═══
@@ -187,7 +192,7 @@ function ConstellationSvg({constellation:c,highlightIdx}){
   var bg=useMemo(()=>Array.from({length:12},()=>({x:Math.random()*W,y:Math.random()*H})),[]);
   if(c.isOverride){sx=x=>pad+x*(W-2*pad)/100;sy=y=>pad+y*(H-2*pad)/100;}
   else{var lons=c.stars.map(s=>s.lon),lats=c.stars.map(s=>s.lat),mnLo=Math.min(...lons),mxLo=Math.max(...lons),mnLa=Math.min(...lats),mxLa=Math.max(...lats),aLa=(mnLa+mxLa)/2,cc=Math.cos(aLa*Math.PI/180),cxs=c.stars.map(s=>s.lon*cc),cys=c.stars.map(s=>s.lat),mnCx=Math.min(...cxs),mxCx=Math.max(...cxs),mnCy=Math.min(...cys),mxCy=Math.max(...cys),dCx=(mxCx-mnCx)||1,dCy=(mxCy-mnCy)||1;mnCx-=dCx*.15;mxCx+=dCx*.15;mnCy-=dCy*.15;mxCy+=dCy*.15;dCx=mxCx-mnCx;dCy=mxCy-mnCy;var scX=(W-2*pad)/dCx,scY=(H-2*pad)/dCy,r=scX/scY;if(r>2)scX=scY*2;else if(r<.5)scY=scX*2;var uW=dCx*scX,uH=dCy*scY,oX=(W-uW)/2,oY=(H-uH)/2;sx=lo=>oX+(lo*cc-mnCx)*scX;sy=la=>oY+(mxCy-la)*scY;}
-  return(<svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{display:"block",margin:"0 auto",background:"#06001a",borderRadius:10}}>
+  return(<svg className="gs-const-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{display:"block",margin:"0 auto",background:"#06001a",borderRadius:10}}>
     {bg.map((s,i)=><circle key={"b"+i} cx={s.x} cy={s.y} r=".8" fill="white" opacity=".2"/>)}
     {c.lines.map((l,i)=>{var a=c.stars[l[0]],b=c.stars[l[1]];if(!a||!b)return null;return <line key={"l"+i} x1={sx(a.lon)} y1={sy(a.lat)} x2={sx(b.lon)} y2={sy(b.lat)} stroke="rgba(130,180,255,0.55)" strokeWidth="1.5" strokeLinecap="round"/>;})}
     {c.stars.map((s,i)=>{var hl=highlightIdx===i,px=sx(s.lon),py=sy(s.lat);return(<g key={"s"+i}>{hl&&<circle cx={px} cy={py} r="10" fill="rgba(255,220,80,0.18)"/>}<circle cx={px} cy={py} r={hl?4:2.5} fill={hl?"#FFD700":"rgba(150,210,255,0.15)"}/><circle cx={px} cy={py} r={hl?2.5:1.5} fill={hl?"#FFF8C0":"white"} opacity=".95"/>{hl&&<line x1={px+8} y1={py-8} x2={px+3} y2={py-3} stroke="#FFD700" strokeWidth="1.5"/>}</g>);})}
@@ -285,10 +290,11 @@ const BOARD_SIZE=100;
 // ═══ MAIN APP ═══
 function OllysGame(){
   var [screen,setScreen]=useState("start"),[gameMode,setGameMode]=useState("geo"),[spaceSubMode,setSpaceSubMode]=useState("all"),[character,setCharacter]=useState(CHARACTERS[0]),[diffKey,setDiffKey]=useState("worldFlags"),[questionTypes,setQuestionTypes]=useState([]),[currentQ,setCurrentQ]=useState(null),[position,setPosition]=useState(0),[targetPos,setTargetPos]=useState(0),[moving,setMoving]=useState(false),[selected,setSelected]=useState(null),[showResult,setShowResult]=useState(false),[score,setScore]=useState(0),[total,setTotal]=useState(0),[showSettings,setShowSettings]=useState(false),[muted,setMuted]=useState(false),[worldData,setWorldData]=useState(null),[usData,setUsData]=useState(null),[constList,setConstList]=useState([]),[constLoading,setConstLoading]=useState(false);
-  var cDecks=useRef({}),sDecks=useRef({}),spaceDeck=useRef([]),spaceIdx=useRef({v:0});
+  var cDecks=useRef({}),sDecks=useRef({}),spaceDeck=useRef([]),spaceIdx=useRef({v:0}),questionWrapRef=useRef(null);
 
   // FIX #1: win audio fires exactly once
   useEffect(()=>{if(screen==="win")Audio.playWin();},[screen]);
+  useEffect(()=>{if(questionWrapRef.current)questionWrapRef.current.scrollTop=0;},[currentQ]);
 
   useEffect(()=>{
     fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(r=>r.json()).then(setWorldData).catch(()=>{});
@@ -333,7 +339,7 @@ function OllysGame(){
   if(screen==="win"){return(<div style={{minHeight:"100vh",background:isSpace?"linear-gradient(135deg,#0a0020,#4a148c,#1a0040)":"linear-gradient(135deg,#f6d365,#fda085)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"sans-serif"}}><CelebrationBlast active/>{isSpace&&<SpaceBg/>}<div style={{background:"white",borderRadius:24,padding:40,textAlign:"center",maxWidth:400,boxShadow:"0 20px 60px rgba(0,0,0,0.3)",zIndex:10,position:"relative"}}><div style={{fontSize:80}}>🏆</div><h1 style={{fontSize:28,color:"#333"}}>{isSpace?"Mission Complete!":"You Win!"} {character.emoji}</h1><p style={{fontSize:16,color:"#666"}}>Score: <strong style={{fontSize:22,color:"#27ae60"}}>{score}</strong> / <strong>{total}</strong></p><button onClick={()=>setScreen("start")} style={{marginTop:20,padding:"14px 40px",fontSize:18,borderRadius:16,border:"none",background:isSpace?"linear-gradient(135deg,#6a1b9a,#9c27b0)":"linear-gradient(135deg,#FF6B6B,#FF8E53)",color:"white",cursor:"pointer",fontWeight:"bold"}}>Play Again! 🚀</button></div></div>);}
 
   var cont=isSpace?null:getContinent(position);
-  return(<div className="gs-root" style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)",fontFamily:"sans-serif",padding:12,position:"relative"}}>
+  return(<div className={`gs-root${moving?' gs-mode-board':' gs-mode-question'}`} style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)",fontFamily:"sans-serif",padding:12,position:"relative"}}>
     {isSpace?<SpaceBg/>:<GeoBg name={cont.bg}/>}
     {showSettings&&<SettingsMenu onClose={()=>setShowSettings(false)} onHome={()=>{setShowSettings(false);setScreen("start");}} onRestart={()=>{setShowSettings(false);startGame(gameMode,spaceSubMode);}}/>}
     <button onClick={()=>setShowSettings(true)} style={{position:"fixed",top:12,left:12,zIndex:50,fontSize:22,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer"}}>⚙️</button>
@@ -341,7 +347,7 @@ function OllysGame(){
     <div className="gs-inner" style={{maxWidth:520,margin:"0 auto",position:"relative",zIndex:1}}>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,gap:6,paddingLeft:120}}>{[`${character.emoji} ${position}/100`,`Score: ${score}/${total}`].map(t=><div key={t} style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"5px 10px",color:"white",fontWeight:"bold",fontSize:13,flex:1,textAlign:"center"}}>{t}</div>)}</div>
       <BoardGrid position={position} targetPosition={targetPos} character={character} onDone={handleMoveDone} isSpace={isSpace}/>
-      <div className="gs-question-wrap" style={{marginTop:10}}>
+      <div ref={questionWrapRef} className="gs-question-wrap" style={{marginTop:10}}>
         {q&&!moving&&(<div className="gs-question-card" style={{background:"rgba(255,255,255,0.97)",borderRadius:20,padding:16,boxShadow:"0 8px 32px rgba(0,0,0,0.4)"}}>
           {showResult&&isCorrect&&(<div style={{textAlign:"center",marginBottom:12}}><p style={{color:"#27ae60",fontWeight:"bold",fontSize:18,marginBottom:8}}>🎉 Correct!</p><SpinnerWheel onResult={handleSpin}/>{q.funFact&&<div style={{marginTop:10,padding:"8px 12px",background:"#f0f8ff",borderRadius:10,border:"2px solid #b3d9ff",fontSize:13,color:"#1a5f8a",textAlign:"center"}}>💡 {q.funFact}</div>}<div style={{marginTop:10,display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>{q.options.map(o=>{var bg2=o.value===q.answer?"#C8F7C5":"#f5f5f5",brd=o.value===q.answer?"2px solid #27ae60":"2px solid #e0e0e0";return <div key={o.value} style={{padding:q.display==="bigflag"?"10px 4px":"8px 6px",fontSize:q.display==="bigflag"?32:13,borderRadius:10,border:brd,background:bg2,color:o.value===q.answer?"#1a7a40":"#aaa",fontWeight:o.value===q.answer?"bold":"normal",textAlign:"center"}}>{o.label}</div>;})}</div></div>)}
           {!showResult&&(<div><QMedia q={q}/><p className="gs-q-text" style={{fontSize:15,fontWeight:"bold",color:"#333",textAlign:"center",marginBottom:12,lineHeight:1.4}}>{q.question}</p><div className="gs-answer-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>{q.options.map(o=><button key={o.value} onClick={()=>handleAnswer(o.value)} style={{padding:q.display==="bigflag"?"16px 8px":"12px 8px",fontSize:q.display==="bigflag"?40:13,borderRadius:12,border:"2px solid #e0e0e0",background:"white",color:"#333",cursor:"pointer",fontWeight:"bold",lineHeight:1.3}}>{o.label}</button>)}</div></div>)}
