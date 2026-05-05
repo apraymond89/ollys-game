@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Olly's Game 🌍🚀</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:#0a0020;font-family:sans-serif;}
+    #root{min-height:100vh;}
+  </style>
+  <!-- CDN dependencies — no build step needed -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+<script type="text/babel" data-presets="react,env">
+// ── Pull React hooks into scope ──
+const { useState, useEffect, useRef, useMemo } = React;
+
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function pick(arr,n,ex){return shuffle(arr.filter(x=>!(ex||[]).includes(x))).slice(0,n);}
+function pickRandom(arr,n,exclude){return shuffle(arr.filter(x=>x!==exclude)).slice(0,n);}
+
+// ═══ COUNTRY DATA ═══
+const COUNTRY_FLAGS={"Afghanistan":"🇦🇫","Albania":"🇦🇱","Algeria":"🇩🇿","Andorra":"🇦🇩","Angola":"🇦🇴","Antigua and Barbuda":"🇦🇬","Argentina":"🇦🇷","Armenia":"🇦🇲","Australia":"🇦🇺","Austria":"🇦🇹","Azerbaijan":"🇦🇿","Bahamas":"🇧🇸","Bahrain":"🇧🇭","Bangladesh":"🇧🇩","Barbados":"🇧🇧","Belarus":"🇧🇾","Belgium":"🇧🇪","Belize":"🇧🇿","Benin":"🇧🇯","Bhutan":"🇧🇹","Bolivia":"🇧🇴","Bosnia and Herzegovina":"🇧🇦","Botswana":"🇧🇼","Brazil":"🇧🇷","Brunei":"🇧🇳","Bulgaria":"🇧🇬","Burkina Faso":"🇧🇫","Burundi":"🇧🇮","Cambodia":"🇰🇭","Cameroon":"🇨🇲","Canada":"🇨🇦","Cape Verde":"🇨🇻","Central African Republic":"🇨🇫","Chad":"🇹🇩","Chile":"🇨🇱","China":"🇨🇳","Colombia":"🇨🇴","Comoros":"🇰🇲","Congo":"🇨🇬","Costa Rica":"🇨🇷","Croatia":"🇭🇷","Cuba":"🇨🇺","Cyprus":"🇨🇾","Czechia":"🇨🇿","DR Congo":"🇨🇩","Denmark":"🇩🇰","Djibouti":"🇩🇯","Dominica":"🇩🇲","Dominican Republic":"🇩🇴","Ecuador":"🇪🇨","Egypt":"🇪🇬","El Salvador":"🇸🇻","Equatorial Guinea":"🇬🇶","Eritrea":"🇪🇷","Estonia":"🇪🇪","Eswatini":"🇸🇿","Ethiopia":"🇪🇹","Fiji":"🇫🇯","Finland":"🇫🇮","France":"🇫🇷","Gabon":"🇬🇦","Gambia":"🇬🇲","Georgia":"🇬🇪","Germany":"🇩🇪","Ghana":"🇬🇭","Greece":"🇬🇷","Grenada":"🇬🇩","Guatemala":"🇬🇹","Guinea":"🇬🇳","Guinea-Bissau":"🇬🇼","Guyana":"🇬🇾","Haiti":"🇭🇹","Honduras":"🇭🇳","Hungary":"🇭🇺","Iceland":"🇮🇸","India":"🇮🇳","Indonesia":"🇮🇩","Iran":"🇮🇷","Iraq":"🇮🇶","Ireland":"🇮🇪","Israel":"🇮🇱","Italy":"🇮🇹","Ivory Coast":"🇨🇮","Jamaica":"🇯🇲","Japan":"🇯🇵","Jordan":"🇯🇴","Kazakhstan":"🇰🇿","Kenya":"🇰🇪","Kiribati":"🇰🇮","Kuwait":"🇰🇼","Kyrgyzstan":"🇰🇬","Laos":"🇱🇦","Latvia":"🇱🇻","Lebanon":"🇱🇧","Lesotho":"🇱🇸","Liberia":"🇱🇷","Libya":"🇱🇾","Liechtenstein":"🇱🇮","Lithuania":"🇱🇹","Luxembourg":"🇱🇺","Madagascar":"🇲🇬","Malawi":"🇲🇼","Malaysia":"🇲🇾","Maldives":"🇲🇻","Mali":"🇲🇱","Malta":"🇲🇹","Marshall Islands":"🇲🇭","Mauritania":"🇲🇷","Mauritius":"🇲🇺","Mexico":"🇲🇽","Micronesia":"🇫🇲","Moldova":"🇲🇩","Monaco":"🇲🇨","Mongolia":"🇲🇳","Montenegro":"🇲🇪","Morocco":"🇲🇦","Mozambique":"🇲🇿","Myanmar":"🇲🇲","Namibia":"🇳🇦","Nauru":"🇳🇷","Nepal":"🇳🇵","Netherlands":"🇳🇱","New Zealand":"🇳🇿","Nicaragua":"🇳🇮","Niger":"🇳🇪","Nigeria":"🇳🇬","North Korea":"🇰🇵","North Macedonia":"🇲🇰","Norway":"🇳🇴","Oman":"🇴🇲","Pakistan":"🇵🇰","Palau":"🇵🇼","Panama":"🇵🇦","Papua New Guinea":"🇵🇬","Paraguay":"🇵🇾","Peru":"🇵🇪","Philippines":"🇵🇭","Poland":"🇵🇱","Portugal":"🇵🇹","Qatar":"🇶🇦","Romania":"🇷🇴","Russia":"🇷🇺","Rwanda":"🇷🇼","Saint Kitts and Nevis":"🇰🇳","Saint Lucia":"🇱🇨","Saint Vincent":"🇻🇨","Samoa":"🇼🇸","San Marino":"🇸🇲","Sao Tome and Principe":"🇸🇹","Saudi Arabia":"🇸🇦","Senegal":"🇸🇳","Serbia":"🇷🇸","Seychelles":"🇸🇨","Sierra Leone":"🇸🇱","Singapore":"🇸🇬","Slovakia":"🇸🇰","Slovenia":"🇸🇮","Solomon Islands":"🇸🇧","Somalia":"🇸🇴","South Africa":"🇿🇦","South Korea":"🇰🇷","South Sudan":"🇸🇸","Spain":"🇪🇸","Sri Lanka":"🇱🇰","Sudan":"🇸🇩","Suriname":"🇸🇷","Sweden":"🇸🇪","Switzerland":"🇨🇭","Syria":"🇸🇾","Taiwan":"🇹🇼","Tajikistan":"🇹🇯","Tanzania":"🇹🇿","Thailand":"🇹🇭","Timor-Leste":"🇹🇱","Togo":"🇹🇬","Tonga":"🇹🇴","Trinidad and Tobago":"🇹🇹","Tunisia":"🇹🇳","Turkey":"🇹🇷","Turkmenistan":"🇹🇲","Tuvalu":"🇹🇻","Uganda":"🇺🇬","Ukraine":"🇺🇦","UAE":"🇦🇪","UK":"🇬🇧","USA":"🇺🇸","Uruguay":"🇺🇾","Uzbekistan":"🇺🇿","Vanuatu":"🇻🇺","Vatican City":"🇻🇦","Venezuela":"🇻🇪","Vietnam":"🇻🇳","Yemen":"🇾🇪","Zambia":"🇿🇲","Zimbabwe":"🇿🇼"};
+const COUNTRIES=[
+{name:"Afghanistan",capital:"Kabul",id:"4"},{name:"Albania",capital:"Tirana",id:"8"},{name:"Algeria",capital:"Algiers",id:"12"},{name:"Andorra",capital:"Andorra la Vella",id:"20"},{name:"Angola",capital:"Luanda",id:"24"},{name:"Antigua and Barbuda",capital:"St. John's",id:"28"},{name:"Argentina",capital:"Buenos Aires",id:"32"},{name:"Armenia",capital:"Yerevan",id:"51"},{name:"Australia",capital:"Canberra",id:"36"},{name:"Austria",capital:"Vienna",id:"40"},{name:"Azerbaijan",capital:"Baku",id:"31"},{name:"Bahamas",capital:"Nassau",id:"44"},{name:"Bahrain",capital:"Manama",id:"48"},{name:"Bangladesh",capital:"Dhaka",id:"50"},{name:"Barbados",capital:"Bridgetown",id:"52"},{name:"Belarus",capital:"Minsk",id:"112"},{name:"Belgium",capital:"Brussels",id:"56"},{name:"Belize",capital:"Belmopan",id:"84"},{name:"Benin",capital:"Porto-Novo",id:"204"},{name:"Bhutan",capital:"Thimphu",id:"64"},{name:"Bolivia",capital:"Sucre",id:"68"},{name:"Bosnia and Herzegovina",capital:"Sarajevo",id:"70"},{name:"Botswana",capital:"Gaborone",id:"72"},{name:"Brazil",capital:"Brasilia",id:"76"},{name:"Brunei",capital:"Bandar Seri Begawan",id:"96"},{name:"Bulgaria",capital:"Sofia",id:"100"},{name:"Burkina Faso",capital:"Ouagadougou",id:"854"},{name:"Burundi",capital:"Gitega",id:"108"},{name:"Cambodia",capital:"Phnom Penh",id:"116"},{name:"Cameroon",capital:"Yaounde",id:"120"},{name:"Canada",capital:"Ottawa",id:"124"},{name:"Cape Verde",capital:"Praia",id:"132"},{name:"Central African Republic",capital:"Bangui",id:"140"},{name:"Chad",capital:"N'Djamena",id:"148"},{name:"Chile",capital:"Santiago",id:"152"},{name:"China",capital:"Beijing",id:"156"},{name:"Colombia",capital:"Bogota",id:"170"},{name:"Comoros",capital:"Moroni",id:"174"},{name:"Congo",capital:"Brazzaville",id:"178"},{name:"Costa Rica",capital:"San Jose",id:"188"},{name:"Croatia",capital:"Zagreb",id:"191"},{name:"Cuba",capital:"Havana",id:"192"},{name:"Cyprus",capital:"Nicosia",id:"196"},{name:"Czechia",capital:"Prague",id:"203"},{name:"DR Congo",capital:"Kinshasa",id:"180"},{name:"Denmark",capital:"Copenhagen",id:"208"},{name:"Djibouti",capital:"Djibouti",id:"262"},{name:"Dominica",capital:"Roseau",id:"212"},{name:"Dominican Republic",capital:"Santo Domingo",id:"214"},{name:"Ecuador",capital:"Quito",id:"218"},{name:"Egypt",capital:"Cairo",id:"818"},{name:"El Salvador",capital:"San Salvador",id:"222"},{name:"Equatorial Guinea",capital:"Malabo",id:"226"},{name:"Eritrea",capital:"Asmara",id:"232"},{name:"Estonia",capital:"Tallinn",id:"233"},{name:"Eswatini",capital:"Mbabane",id:"748"},{name:"Ethiopia",capital:"Addis Ababa",id:"231"},{name:"Fiji",capital:"Suva",id:"242"},{name:"Finland",capital:"Helsinki",id:"246"},{name:"France",capital:"Paris",id:"250"},{name:"Gabon",capital:"Libreville",id:"266"},{name:"Gambia",capital:"Banjul",id:"270"},{name:"Georgia",capital:"Tbilisi",id:"268"},{name:"Germany",capital:"Berlin",id:"276"},{name:"Ghana",capital:"Accra",id:"288"},{name:"Greece",capital:"Athens",id:"300"},{name:"Grenada",capital:"St. George's",id:"308"},{name:"Guatemala",capital:"Guatemala City",id:"320"},{name:"Guinea",capital:"Conakry",id:"324"},{name:"Guinea-Bissau",capital:"Bissau",id:"624"},{name:"Guyana",capital:"Georgetown",id:"328"},{name:"Haiti",capital:"Port-au-Prince",id:"332"},{name:"Honduras",capital:"Tegucigalpa",id:"340"},{name:"Hungary",capital:"Budapest",id:"348"},{name:"Iceland",capital:"Reykjavik",id:"352"},{name:"India",capital:"New Delhi",id:"356"},{name:"Indonesia",capital:"Jakarta",id:"360"},{name:"Iran",capital:"Tehran",id:"364"},{name:"Iraq",capital:"Baghdad",id:"368"},{name:"Ireland",capital:"Dublin",id:"372"},{name:"Israel",capital:"Jerusalem",id:"376"},{name:"Italy",capital:"Rome",id:"380"},{name:"Ivory Coast",capital:"Yamoussoukro",id:"384"},{name:"Jamaica",capital:"Kingston",id:"388"},{name:"Japan",capital:"Tokyo",id:"392"},{name:"Jordan",capital:"Amman",id:"400"},{name:"Kazakhstan",capital:"Astana",id:"398"},{name:"Kenya",capital:"Nairobi",id:"404"},{name:"Kiribati",capital:"Tarawa",id:"296"},{name:"Kuwait",capital:"Kuwait City",id:"414"},{name:"Kyrgyzstan",capital:"Bishkek",id:"417"},{name:"Laos",capital:"Vientiane",id:"418"},{name:"Latvia",capital:"Riga",id:"428"},{name:"Lebanon",capital:"Beirut",id:"422"},{name:"Lesotho",capital:"Maseru",id:"426"},{name:"Liberia",capital:"Monrovia",id:"430"},{name:"Libya",capital:"Tripoli",id:"434"},{name:"Liechtenstein",capital:"Vaduz",id:"438"},{name:"Lithuania",capital:"Vilnius",id:"440"},{name:"Luxembourg",capital:"Luxembourg",id:"442"},{name:"Madagascar",capital:"Antananarivo",id:"450"},{name:"Malawi",capital:"Lilongwe",id:"454"},{name:"Malaysia",capital:"Kuala Lumpur",id:"458"},{name:"Maldives",capital:"Male",id:"462"},{name:"Mali",capital:"Bamako",id:"466"},{name:"Malta",capital:"Valletta",id:"470"},{name:"Marshall Islands",capital:"Majuro",id:"584"},{name:"Mauritania",capital:"Nouakchott",id:"478"},{name:"Mauritius",capital:"Port Louis",id:"480"},{name:"Mexico",capital:"Mexico City",id:"484"},{name:"Micronesia",capital:"Palikir",id:"583"},{name:"Moldova",capital:"Chisinau",id:"498"},{name:"Monaco",capital:"Monaco",id:"492"},{name:"Mongolia",capital:"Ulaanbaatar",id:"496"},{name:"Montenegro",capital:"Podgorica",id:"499"},{name:"Morocco",capital:"Rabat",id:"504"},{name:"Mozambique",capital:"Maputo",id:"508"},{name:"Myanmar",capital:"Naypyidaw",id:"104"},{name:"Namibia",capital:"Windhoek",id:"516"},{name:"Nauru",capital:"Yaren",id:"520"},{name:"Nepal",capital:"Kathmandu",id:"524"},{name:"Netherlands",capital:"Amsterdam",id:"528"},{name:"New Zealand",capital:"Wellington",id:"554"},{name:"Nicaragua",capital:"Managua",id:"558"},{name:"Niger",capital:"Niamey",id:"562"},{name:"Nigeria",capital:"Abuja",id:"566"},{name:"North Korea",capital:"Pyongyang",id:"408"},{name:"North Macedonia",capital:"Skopje",id:"807"},{name:"Norway",capital:"Oslo",id:"578"},{name:"Oman",capital:"Muscat",id:"512"},{name:"Pakistan",capital:"Islamabad",id:"586"},{name:"Palau",capital:"Ngerulmud",id:"585"},{name:"Panama",capital:"Panama City",id:"591"},{name:"Papua New Guinea",capital:"Port Moresby",id:"598"},{name:"Paraguay",capital:"Asuncion",id:"600"},{name:"Peru",capital:"Lima",id:"604"},{name:"Philippines",capital:"Manila",id:"608"},{name:"Poland",capital:"Warsaw",id:"616"},{name:"Portugal",capital:"Lisbon",id:"620"},{name:"Qatar",capital:"Doha",id:"634"},{name:"Romania",capital:"Bucharest",id:"642"},{name:"Russia",capital:"Moscow",id:"643"},{name:"Rwanda",capital:"Kigali",id:"646"},{name:"Saint Kitts and Nevis",capital:"Basseterre",id:"659"},{name:"Saint Lucia",capital:"Castries",id:"662"},{name:"Saint Vincent",capital:"Kingstown",id:"670"},{name:"Samoa",capital:"Apia",id:"882"},{name:"San Marino",capital:"San Marino",id:"674"},{name:"Sao Tome and Principe",capital:"Sao Tome",id:"678"},{name:"Saudi Arabia",capital:"Riyadh",id:"682"},{name:"Senegal",capital:"Dakar",id:"686"},{name:"Serbia",capital:"Belgrade",id:"688"},{name:"Seychelles",capital:"Victoria",id:"690"},{name:"Sierra Leone",capital:"Freetown",id:"694"},{name:"Singapore",capital:"Singapore",id:"702"},{name:"Slovakia",capital:"Bratislava",id:"703"},{name:"Slovenia",capital:"Ljubljana",id:"705"},{name:"Solomon Islands",capital:"Honiara",id:"90"},{name:"Somalia",capital:"Mogadishu",id:"706"},{name:"South Africa",capital:"Pretoria",id:"710"},{name:"South Korea",capital:"Seoul",id:"410"},{name:"South Sudan",capital:"Juba",id:"728"},{name:"Spain",capital:"Madrid",id:"724"},{name:"Sri Lanka",capital:"Colombo",id:"144"},{name:"Sudan",capital:"Khartoum",id:"729"},{name:"Suriname",capital:"Paramaribo",id:"740"},{name:"Sweden",capital:"Stockholm",id:"752"},{name:"Switzerland",capital:"Bern",id:"756"},{name:"Syria",capital:"Damascus",id:"760"},{name:"Taiwan",capital:"Taipei",id:"158"},{name:"Tajikistan",capital:"Dushanbe",id:"762"},{name:"Tanzania",capital:"Dodoma",id:"834"},{name:"Thailand",capital:"Bangkok",id:"764"},{name:"Timor-Leste",capital:"Dili",id:"626"},{name:"Togo",capital:"Lome",id:"768"},{name:"Tonga",capital:"Nuku'alofa",id:"776"},{name:"Trinidad and Tobago",capital:"Port of Spain",id:"780"},{name:"Tunisia",capital:"Tunis",id:"788"},{name:"Turkey",capital:"Ankara",id:"792"},{name:"Turkmenistan",capital:"Ashgabat",id:"795"},{name:"Tuvalu",capital:"Funafuti",id:"798"},{name:"Uganda",capital:"Kampala",id:"800"},{name:"Ukraine",capital:"Kyiv",id:"804"},{name:"UAE",capital:"Abu Dhabi",id:"784"},{name:"UK",capital:"London",id:"826"},{name:"USA",capital:"Washington DC",id:"840"},{name:"Uruguay",capital:"Montevideo",id:"858"},{name:"Uzbekistan",capital:"Tashkent",id:"860"},{name:"Vanuatu",capital:"Port Vila",id:"548"},{name:"Vatican City",capital:"Vatican City",id:"336"},{name:"Venezuela",capital:"Caracas",id:"862"},{name:"Vietnam",capital:"Hanoi",id:"704"},{name:"Yemen",capital:"Sanaa",id:"887"},{name:"Zambia",capital:"Lusaka",id:"894"},{name:"Zimbabwe",capital:"Harare",id:"716"}
+].map(c=>({...c,flag:COUNTRY_FLAGS[c.name]||"🏳️",mapable:!!c.id}));
+const ALL_COUNTRIES=COUNTRIES;
+
+// ═══ US STATES ═══
+const STATE_FLAGS=[{name:"Alabama",capital:"Montgomery",abbr:"al"},{name:"Alaska",capital:"Juneau",abbr:"ak"},{name:"Arizona",capital:"Phoenix",abbr:"az"},{name:"Arkansas",capital:"Little Rock",abbr:"ar"},{name:"California",capital:"Sacramento",abbr:"ca"},{name:"Colorado",capital:"Denver",abbr:"co"},{name:"Connecticut",capital:"Hartford",abbr:"ct"},{name:"Delaware",capital:"Dover",abbr:"de"},{name:"Florida",capital:"Tallahassee",abbr:"fl"},{name:"Georgia",capital:"Atlanta",abbr:"ga"},{name:"Hawaii",capital:"Honolulu",abbr:"hi"},{name:"Idaho",capital:"Boise",abbr:"id"},{name:"Illinois",capital:"Springfield",abbr:"il"},{name:"Indiana",capital:"Indianapolis",abbr:"in"},{name:"Iowa",capital:"Des Moines",abbr:"ia"},{name:"Kansas",capital:"Topeka",abbr:"ks"},{name:"Kentucky",capital:"Frankfort",abbr:"ky"},{name:"Louisiana",capital:"Baton Rouge",abbr:"la"},{name:"Maine",capital:"Augusta",abbr:"me"},{name:"Maryland",capital:"Annapolis",abbr:"md"},{name:"Massachusetts",capital:"Boston",abbr:"ma"},{name:"Michigan",capital:"Lansing",abbr:"mi"},{name:"Minnesota",capital:"Saint Paul",abbr:"mn"},{name:"Mississippi",capital:"Jackson",abbr:"ms"},{name:"Missouri",capital:"Jefferson City",abbr:"mo"},{name:"Montana",capital:"Helena",abbr:"mt"},{name:"Nebraska",capital:"Lincoln",abbr:"ne"},{name:"Nevada",capital:"Carson City",abbr:"nv"},{name:"New Hampshire",capital:"Concord",abbr:"nh"},{name:"New Jersey",capital:"Trenton",abbr:"nj"},{name:"New Mexico",capital:"Santa Fe",abbr:"nm"},{name:"New York",capital:"Albany",abbr:"ny"},{name:"North Carolina",capital:"Raleigh",abbr:"nc"},{name:"North Dakota",capital:"Bismarck",abbr:"nd"},{name:"Ohio",capital:"Columbus",abbr:"oh"},{name:"Oklahoma",capital:"Oklahoma City",abbr:"ok"},{name:"Oregon",capital:"Salem",abbr:"or"},{name:"Pennsylvania",capital:"Harrisburg",abbr:"pa"},{name:"Rhode Island",capital:"Providence",abbr:"ri"},{name:"South Carolina",capital:"Columbia",abbr:"sc"},{name:"South Dakota",capital:"Pierre",abbr:"sd"},{name:"Tennessee",capital:"Nashville",abbr:"tn"},{name:"Texas",capital:"Austin",abbr:"tx"},{name:"Utah",capital:"Salt Lake City",abbr:"ut"},{name:"Vermont",capital:"Montpelier",abbr:"vt"},{name:"Virginia",capital:"Richmond",abbr:"va"},{name:"Washington",capital:"Olympia",abbr:"wa"},{name:"West Virginia",capital:"Charleston",abbr:"wv"},{name:"Wisconsin",capital:"Madison",abbr:"wi"},{name:"Wyoming",capital:"Cheyenne",abbr:"wy"}];
+const STATE_FIPS={"Alabama":"01","Alaska":"02","Arizona":"04","Arkansas":"05","California":"06","Colorado":"08","Connecticut":"09","Delaware":"10","Florida":"12","Georgia":"13","Hawaii":"15","Idaho":"16","Illinois":"17","Indiana":"18","Iowa":"19","Kansas":"20","Kentucky":"21","Louisiana":"22","Maine":"23","Maryland":"24","Massachusetts":"25","Michigan":"26","Minnesota":"27","Mississippi":"28","Missouri":"29","Montana":"30","Nebraska":"31","Nevada":"32","New Hampshire":"33","New Jersey":"34","New Mexico":"35","New York":"36","North Carolina":"37","North Dakota":"38","Ohio":"39","Oklahoma":"40","Oregon":"41","Pennsylvania":"42","Rhode Island":"44","South Carolina":"45","South Dakota":"46","Tennessee":"47","Texas":"48","Utah":"49","Vermont":"50","Virginia":"51","Washington":"53","West Virginia":"54","Wisconsin":"55","Wyoming":"56"};
+
+// ═══ CHARACTERS & BOARD ═══
+const CHARS=["🫅","🦸","🧚","🏎","🚀","🦄","🦖","🪐","👽","🦈","✈️","🚢"];
+const CC=["#e67e22","#2980b9","#8e44ad","#e74c3c","#16a085","#e91e8c","#27ae60","#5c6bc0","#00b894","#0984e3","#6c5ce7","#fd79a8"];
+const CB=["#d35400","#1a6699","#6c3483","#c0392b","#0e6655","#b5176d","#1e8449","#3949ab","#00897b","#0652dd","#4834d4","#e84393"];
+const CHARACTERS=CHARS.map((e,i)=>({emoji:e,color:CC[i],border:CB[i]}));
+
+const CONT_DATA=[["North America","🌎","northAmerica","#2e7d32","#388e3c",1,15],["Atlantic","🌊","atlantic","#1565c0","#1976d2",16,25],["Europe","🏰","europe","#6a1b9a","#7b1fa2",26,40],["Africa","🌍","africa","#bf360c","#d84315",41,55],["Middle East","🕌","middleEast","#f57f17","#f9a825",56,65],["Asia","🏯","asia","#b71c1c","#c62828",66,80],["Pacific","🐋","pacific","#006064","#00838f",81,90],["Australasia","🦘","australasia","#33691e","#558b2f",91,100]];
+const CONTINENTS=CONT_DATA.map(d=>({name:d[0],emoji:d[1],bg:d[2],color:d[3],tile:d[4],range:[d[5],d[6]]}));
+function getContinent(p){for(var c of CONTINENTS)if(p>=c.range[0]&&p<=c.range[1])return c;return CONTINENTS[0];}
+
+// ═══ GEO QUESTIONS ═══
+const DIFF_LISTS={worldFlags:["worldFlag"],countryMap:["countryShape"],all:["worldFlag","countryShape","countryShape","countrySilhouette","stateShape","worldCapital","stateCapital"]};
+function makeGeoQuestionPool(k){return DIFF_LISTS[k]||DIFF_LISTS.worldFlags;}
+
+function generateGeoQuestion(types,cDecks,sDecks){
+  var worldT=types.filter(t=>t.indexOf("state")!==0&&t!=="countrySilhouette"&&t!=="stateShape");
+  var otherT=types.filter(t=>t.indexOf("state")===0||t==="countrySilhouette"||t==="stateShape");
+  var type;
+  if(otherT.length&&Math.random()<(otherT.length/(otherT.length+worldT.length)))type=otherT[Math.floor(Math.random()*otherT.length)];
+  else type=worldT[Math.floor(Math.random()*Math.max(worldT.length,1))];
+  function nextC(k){if(!cDecks[k]||cDecks[k].idx>=cDecks[k].deck.length){cDecks[k]={deck:shuffle(ALL_COUNTRIES.slice()),idx:0};}return cDecks[k].deck[cDecks[k].idx++];}
+  function nextS(k){if(!sDecks[k]||sDecks[k].idx>=sDecks[k].deck.length){sDecks[k]={deck:shuffle(STATE_FLAGS.slice()),idx:0};}return sDecks[k].deck[sDecks[k].idx++];}
+  function nextMapC(k){var mc=COUNTRIES.filter(x=>x.id);if(!cDecks[k]||cDecks[k].idx>=cDecks[k].deck.length){cDecks[k]={deck:shuffle(mc),idx:0};}return cDecks[k].deck[cDecks[k].idx++];}
+  var c,s,opts;
+  if(type==="worldFlag"){c=nextC("wf");opts=shuffle([c,...pick(ALL_COUNTRIES,3,[c])]);return{type,question:"Which flag belongs to "+c.name+"?",options:opts.map(x=>({label:x.flag,value:x.name})),answer:c.name,display:"bigflag"};}
+  if(type==="countryShape"){c=nextMapC("cs");var wo=shuffle(COUNTRIES.filter(x=>x.id&&x.id!==c.id)).slice(0,3);opts=shuffle([c,...wo]);return{type,question:"Which country is highlighted?",countryHighlight:c,options:opts.map(x=>({label:x.name,value:x.name})),answer:c.name,display:"text"};}
+  if(type==="countrySilhouette"){c=nextMapC("csi");var wo2=shuffle(COUNTRIES.filter(x=>x.id&&x.id!==c.id)).slice(0,3);opts=shuffle([c,...wo2]);return{type,question:"Name this country from its shape!",countrySilhouette:c,options:opts.map(x=>({label:x.name,value:x.name})),answer:c.name,display:"text"};}
+  if(type==="stateShape"){s=nextS("ss");opts=shuffle([s,...pick(STATE_FLAGS,3,[s])]);return{type,question:"Name this US state from its shape!",stateShapeName:s.name,options:opts.map(x=>({label:x.name,value:x.name})),answer:s.name,display:"text"};}
+  if(type==="stateCapital"){s=nextS("sc");opts=shuffle([s,...pick(STATE_FLAGS,3,[s])]);return{type,question:"What is the capital of "+s.name+"?",options:opts.map(x=>({label:x.capital,value:x.capital})),answer:s.capital,display:"text"};}
+  c=nextC("wc");opts=shuffle([c,...pick(ALL_COUNTRIES,3,[c])]);return{type:"worldCapital",question:"What is the capital of "+c.name+"?",bigEmoji:c.flag,options:opts.map(x=>({label:x.capital,value:x.capital})),answer:c.capital,display:"text"};
+}
+
+// ═══ MAP COMPONENTS ═══
+function CountryShape({country,worldData}){
+  var ref=useRef(null);
+  useEffect(()=>{if(!worldData||!ref.current||!window.topojson)return;var w=220,h=160,svg=d3.select(ref.current);svg.selectAll("*").remove();svg.append("rect").attr("width",w).attr("height",h).attr("fill","#1a2a4a").attr("rx",8);var cs=window.topojson.feature(worldData,worldData.objects.countries);var f=cs.features.find(d=>String(d.id)===String(country.id));if(!f)f=cs.features.find(d=>d.properties&&d.properties.name===country.name);if(!f)return;try{var p=d3.geoMercator().fitExtent([[24,24],[w-24,h-24]],f);svg.append("path").datum(f).attr("d",d3.geoPath().projection(p)).attr("fill","#4ECDC4").attr("stroke","white").attr("stroke-width",1.5);}catch(e){}},[worldData,country]);
+  return <div style={{display:"flex",justifyContent:"center",marginBottom:8}}><svg ref={ref} width="220" height="160" viewBox="0 0 220 160" style={{display:"block",borderRadius:8,border:"2px solid #2196F3"}}/></div>;
+}
+function StateShape({stateName,usData}){
+  var ref=useRef(null);
+  useEffect(()=>{if(!usData||!ref.current||!window.topojson||!stateName)return;var w=220,h=160,svg=d3.select(ref.current);svg.selectAll("*").remove();svg.append("rect").attr("width",w).attr("height",h).attr("fill","#1a2a4a").attr("rx",8);var ss=window.topojson.feature(usData,usData.objects.states);var fips=STATE_FIPS[stateName];var f=ss.features.find(d=>String(d.id)===fips);if(!f)return;try{var p=d3.geoAlbersUsa().fitExtent([[24,24],[w-24,h-24]],f);svg.append("path").datum(f).attr("d",d3.geoPath().projection(p)).attr("fill","#FF6B6B").attr("stroke","white").attr("stroke-width",1.5);}catch(e){try{var p2=d3.geoMercator().fitExtent([[24,24],[w-24,h-24]],f);svg.append("path").datum(f).attr("d",d3.geoPath().projection(p2)).attr("fill","#FF6B6B").attr("stroke","white").attr("stroke-width",1.5);}catch(e2){}}},[usData,stateName]);
+  return <div style={{display:"flex",justifyContent:"center",marginBottom:8}}><svg ref={ref} width="220" height="160" viewBox="0 0 220 160" style={{display:"block",borderRadius:8,border:"2px solid #FF6B6B"}}/></div>;
+}
+
+function WorldMap({highlight,worldData}){
+  var ref=useRef(null),[zoomed,setZoomed]=useState(false),[pulse,setPulse]=useState(true);
+  useEffect(()=>{var t=setInterval(()=>setPulse(p=>!p),600);return()=>clearInterval(t);},[]);
+  useEffect(()=>{setZoomed(false);},[highlight]);
+  useEffect(()=>{
+    if(!worldData||!ref.current||!window.topojson)return;
+    var w=420,h=220,svg=d3.select(ref.current);
+    svg.selectAll("*").remove();
+    svg.append("rect").attr("width",w).attr("height",h).attr("fill","#1565c0");
+    var cs=window.topojson.feature(worldData,worldData.objects.countries);
+    var hlF=cs.features.find(f=>String(f.id)===String(highlight.id));
+    if(!hlF)hlF=cs.features.find(f=>f.properties&&f.properties.name===highlight.name);
+    var proj;
+    if(zoomed&&hlF){try{proj=d3.geoMercator().fitExtent([[50,50],[w-50,h-50]],hlF);if(proj.scale()>8000)proj.scale(8000).translate([w/2,h/2]);}catch(e){proj=d3.geoNaturalEarth1().scale(72).translate([w/2,h/2]);}}
+    else{proj=d3.geoNaturalEarth1().scale(72).translate([w/2,h/2]);svg.append("path").datum(d3.geoGraticule()()).attr("d",d3.geoPath().projection(proj)).attr("fill","none").attr("stroke","rgba(255,255,255,0.08)").attr("stroke-width",0.5);}
+    var path=d3.geoPath().projection(proj);
+    var hlId=hlF?String(hlF.id):null;
+    svg.selectAll(".c").data(cs.features).enter().append("path")
+      .attr("class",d=>hlId&&String(d.id)===hlId?"c highlighted":"c")
+      .attr("d",path).attr("fill",d=>hlId&&String(d.id)===hlId?"#FFD700":"#3d9b6b")
+      .attr("stroke","#1a4731").attr("stroke-width",d=>hlId&&String(d.id)===hlId?1.5:0.4);
+  },[worldData,highlight,zoomed]);
+  useEffect(()=>{if(!ref.current)return;d3.select(ref.current).selectAll(".highlighted").attr("fill",pulse?"#FFD700":"#FF8C00");},[pulse]);
+  return(<div style={{borderRadius:12,overflow:"hidden",marginBottom:8,border:"2px solid #2196F3",background:"#1565c0",position:"relative"}}><svg ref={ref} width="100%" viewBox="0 0 420 220" style={{display:"block"}}/><button onClick={()=>setZoomed(z=>!z)} style={{position:"absolute",bottom:6,right:6,padding:"4px 10px",fontSize:12,borderRadius:8,border:"none",background:"rgba(0,0,0,0.6)",color:"white",cursor:"pointer",fontWeight:"bold"}}>{zoomed?"World view":"Zoom in"}</button></div>);
+}
+
+// ═══ PLANETS, MOONS, TRIVIA ═══
+const PLANETS=[{name:"Mercury",color:"#b5b5b5",size:18,rings:false,moons:0,funFact:"A year on Mercury is only 88 Earth days!"},{name:"Venus",color:"#e8cda0",size:28,rings:false,moons:0,funFact:"Venus spins backwards!"},{name:"Earth",color:"#4fa3e0",size:28,rings:false,moons:1,funFact:"Earth is the only planet not named after a god!"},{name:"Mars",color:"#c1440e",size:22,rings:false,moons:2,funFact:"Mars has the biggest volcano in the solar system!"},{name:"Jupiter",color:"#c88b3a",size:52,rings:true,moons:95,funFact:"1,300 Earths could fit inside Jupiter!"},{name:"Saturn",color:"#e4d191",size:46,rings:true,moons:146,funFact:"Saturn's rings are made of ice and rock!"},{name:"Uranus",color:"#7de8e8",size:36,rings:true,moons:27,funFact:"Uranus rolls around the sun on its side!"},{name:"Neptune",color:"#4b70dd",size:34,rings:true,moons:16,funFact:"Winds on Neptune are faster than any on Earth!"}];
+const MOONS=[{name:"The Moon",planet:"Earth",funFact:"Earth's only natural satellite"},{name:"Phobos",planet:"Mars",funFact:"Larger of Mars's two moons"},{name:"Deimos",planet:"Mars",funFact:"Smaller of Mars's two moons"},{name:"Io",planet:"Jupiter",funFact:"Most volcanically active body in the solar system"},{name:"Europa",planet:"Jupiter",funFact:"Has a huge ocean under its icy surface"},{name:"Ganymede",planet:"Jupiter",funFact:"Largest moon in the solar system"},{name:"Titan",planet:"Saturn",funFact:"Has a thick atmosphere"},{name:"Enceladus",planet:"Saturn",funFact:"Shoots jets of water ice into space"},{name:"Triton",planet:"Neptune",funFact:"Orbits Neptune backwards!"}];
+
+
+// ═══ CONSTELLATION DATA ═══
+const CELESTIAL_BASE="https://cdn.jsdelivr.net/npm/d3-celestial@0.6.7/data";
+var _constLinesData=null,_constNamesData=null,_starNamesData=null,_starsData=null,_constellationsReady=false,_constellationsList=[];
+const CONST_OVERRIDES={"UMa":{name:"Ursa Major",en:"Great Bear",stars:[{x:10,y:45,n:"Alkaid"},{x:24,y:38,n:"Mizar"},{x:36,y:35,n:"Alioth"},{x:48,y:40,n:"Megrez"},{x:55,y:52,n:"Phecda"},{x:42,y:55,n:"Merak"},{x:35,y:48,n:"Dubhe"}],lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,3]]}};
+const CONST_FACTS={"Ori":"Orion's Belt — three stars in a perfect line!","UMa":"Contains the famous Big Dipper!","UMi":"Polaris sits almost exactly above Earth's North Pole!","Cas":"Cassiopeia circles the pole and never sets!","Cyg":"Cygnus forms the Northern Cross!","Leo":"Leo's sickle looks just like a lion's mane!","Sco":"Antares could swallow Mercury, Venus, Earth and Mars!","Gem":"Castor is actually six stars in three orbiting pairs!","Tau":"The Pleiades cluster has guided sailors for thousands of years!","Lyr":"Vega was the first star to be photographed — in 1850!","Cru":"The Southern Cross appears on flags of Australia and NZ!","Sgr":"The Milky Way's centre lies toward Sagittarius!","Boo":"Arcturus is the brightest star in the northern sky!","Per":"Algol dims every 2.87 days!","Aql":"Altair spins so fast it bulges at its equator!","Her":"The Hercules Cluster M13 has over 300,000 stars!","CMa":"Sirius is the brightest star in the night sky!","Cep":"A Cepheus star will be the next North Star!","Cen":"Alpha Centauri is the closest star system to our Sun!","Dra":"Draco wraps around the Little Dipper!","Peg":"Home to the Great Square of Pegasus!","And":"The Andromeda Galaxy is visible here!","Vir":"Home to the Virgo Cluster of galaxies!"};
+
+async function loadConstellationData(){
+  if(_constellationsReady)return _constellationsList;
+  try{
+    var [lR,nR,sR]=await Promise.all([fetch(CELESTIAL_BASE+"/constellations.lines.json").then(r=>r.json()),fetch(CELESTIAL_BASE+"/constellations.json").then(r=>r.json()),fetch(CELESTIAL_BASE+"/stars.6.json").then(r=>r.json())]);
+    _constLinesData=lR;_constNamesData=nR;_starsData=sR;
+    try{var snR=await fetch(CELESTIAL_BASE+"/starnames.json");if(snR.ok)_starNamesData=await snR.json();}catch(e){}
+    var sm={};_starsData.features.forEach(f=>{var p=f.properties||{};sm[f.id]={lon:f.geometry.coordinates[0],lat:f.geometry.coordinates[1],name:p.name||""};});
+    if(_starNamesData)Object.keys(_starNamesData).forEach(h=>{var nm=_starNamesData[h].name||_starNamesData[h].desig||"";if(sm[h])sm[h].name=nm;});
+    var nm={};_constNamesData.features.forEach(f=>{nm[f.id]={name:f.properties.name,en:f.properties.en||f.properties.name};});
+    _constellationsList=_constLinesData.features.map(f=>{
+      var id=f.id,n=nm[id]||{name:id,en:id};
+      if(CONST_OVERRIDES[id]){var ov=CONST_OVERRIDES[id];var ovS=ov.stars.map((s,i)=>({lon:s.x,lat:s.y,idx:i}));var ovN=ov.stars.map((s,i)=>({idx:i,name:s.n})).filter(s=>s.name.length>2);return{id,name:ov.name||n.name,en:ov.en||n.en,stars:ovS,lines:ov.lines,namedStars:ovN,isOverride:true};}
+      var coords=f.geometry.coordinates,spm={},lines=[];
+      coords.forEach(seg=>{var idxs=seg.map(pt=>{var k=pt[0].toFixed(4)+","+pt[1].toFixed(4);if(!spm[k])spm[k]={lon:pt[0],lat:pt[1],idx:Object.keys(spm).length};return spm[k].idx;});for(var i=0;i<idxs.length-1;i++)lines.push([idxs[i],idxs[i+1]]);});
+      var stars=Object.values(spm).sort((a,b)=>a.idx-b.idx);
+      var named=[];stars.forEach((s,si)=>{var bd=1.5,bn=null;Object.values(sm).forEach(st=>{if(!st.name)return;var d=Math.sqrt(Math.pow(st.lon-s.lon,2)+Math.pow(st.lat-s.lat,2));if(d<bd){bd=d;bn=st.name;}});if(bn)named.push({idx:si,name:bn});});
+      return{id,name:n.name,en:n.en,stars,lines,namedStars:named};
+    }).filter(c=>c.stars.length>=2);
+    _constellationsReady=true;return _constellationsList;
+  }catch(e){console.error("Constellation load error:",e);return[];}
+}
+
+function ConstellationSvg({constellation:c,highlightIdx}){
+  if(!c||!c.stars||c.stars.length<2)return <div style={{width:220,height:180,background:"#06001a",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",color:"#556",fontSize:13}}>Loading...</div>;
+  var W=220,H=180,pad=18,sx,sy;
+  var bg=useMemo(()=>Array.from({length:12},()=>({x:Math.random()*W,y:Math.random()*H})),[]);
+  if(c.isOverride){sx=x=>pad+x*(W-2*pad)/100;sy=y=>pad+y*(H-2*pad)/100;}
+  else{var lons=c.stars.map(s=>s.lon),lats=c.stars.map(s=>s.lat),mnLo=Math.min(...lons),mxLo=Math.max(...lons),mnLa=Math.min(...lats),mxLa=Math.max(...lats),aLa=(mnLa+mxLa)/2,cc=Math.cos(aLa*Math.PI/180),cxs=c.stars.map(s=>s.lon*cc),cys=c.stars.map(s=>s.lat),mnCx=Math.min(...cxs),mxCx=Math.max(...cxs),mnCy=Math.min(...cys),mxCy=Math.max(...cys),dCx=(mxCx-mnCx)||1,dCy=(mxCy-mnCy)||1;mnCx-=dCx*.15;mxCx+=dCx*.15;mnCy-=dCy*.15;mxCy+=dCy*.15;dCx=mxCx-mnCx;dCy=mxCy-mnCy;var scX=(W-2*pad)/dCx,scY=(H-2*pad)/dCy,r=scX/scY;if(r>2)scX=scY*2;else if(r<.5)scY=scX*2;var uW=dCx*scX,uH=dCy*scY,oX=(W-uW)/2,oY=(H-uH)/2;sx=lo=>oX+(lo*cc-mnCx)*scX;sy=la=>oY+(mxCy-la)*scY;}
+  return(<svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} style={{display:"block",margin:"0 auto",background:"#06001a",borderRadius:10}}>
+    {bg.map((s,i)=><circle key={"b"+i} cx={s.x} cy={s.y} r=".8" fill="white" opacity=".2"/>)}
+    {c.lines.map((l,i)=>{var a=c.stars[l[0]],b=c.stars[l[1]];if(!a||!b)return null;return <line key={"l"+i} x1={sx(a.lon)} y1={sy(a.lat)} x2={sx(b.lon)} y2={sy(b.lat)} stroke="rgba(130,180,255,0.55)" strokeWidth="1.5" strokeLinecap="round"/>;})}
+    {c.stars.map((s,i)=>{var hl=highlightIdx===i,px=sx(s.lon),py=sy(s.lat);return(<g key={"s"+i}>{hl&&<circle cx={px} cy={py} r="10" fill="rgba(255,220,80,0.18)"/>}<circle cx={px} cy={py} r={hl?4:2.5} fill={hl?"#FFD700":"rgba(150,210,255,0.15)"}/><circle cx={px} cy={py} r={hl?2.5:1.5} fill={hl?"#FFF8C0":"white"} opacity=".95"/>{hl&&<line x1={px+8} y1={py-8} x2={px+3} y2={py-3} stroke="#FFD700" strokeWidth="1.5"/>}</g>);})}
+  </svg>);
+}
+
+function PlanetSvg({planet:p}){var w=220,h=160,cx=110,cy=80,r=p.size,g="pg_"+p.name,rc={Jupiter:"#c8a86b",Saturn:"#d4c57a",Uranus:"#a0e0e0",Neptune:"#6080cc"}[p.name]||"#aaa";return(<svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{display:"block",margin:"0 auto"}}><defs><radialGradient id={g} cx="35%" cy="35%"><stop offset="0%" stopColor="white" stopOpacity=".4"/><stop offset="100%" stopColor={p.color} stopOpacity="1"/></radialGradient></defs>{p.rings&&p.name==="Saturn"&&<ellipse cx={cx} cy={cy+4} rx={r*2.1} ry={r*.4} fill="none" stroke={rc} strokeWidth="10" opacity=".7"/>}<circle cx={cx} cy={cy} r={r} fill={`url(#${g})`}/>{p.name==="Earth"&&<g><ellipse cx={cx-6} cy={cy-4} rx="8" ry="6" fill="#2d8a4e" opacity=".8"/></g>}{p.name==="Saturn"&&<ellipse cx={cx} cy={cy+4} rx={r*2.1} ry={r*.4} fill="none" stroke={rc} strokeWidth="5" opacity=".35"/>}<ellipse cx={cx-r*.3} cy={cy-r*.3} rx={r*.2} ry={r*.15} fill="white" opacity=".35"/></svg>);}
+
+// ═══ SPACE QUESTIONS ═══
+const SPACE_Q_ALL=["constellationId","constellationId","constellationId","constellationStarId","planetMoons","moonPlanet"];
+var _spaceQDeck=null,_spaceQDeckIdx=0;
+const SPACE_Q_CONST=["constellationId","constellationId","constellationId","constellationId","constellationStarId"];
+var _constDecks={},_planetDeck=null,_planetDeckIdx=0,_moonDeck=null,_moonDeckIdx=0;
+
+// IAU official hemisphere classification for all 88 constellations
+// N = Northern only, S = Southern only, B = Both (equatorial, visible from both hemispheres)
+var CONST_HEMISPHERE={
+  // Northern only (24)
+  And:"N",Aur:"N",Boo:"N",Cam:"N",CVn:"N",Cas:"N",Cep:"N",Com:"N",CrB:"N",
+  Cyg:"N",Del:"N",Dra:"N",Equ:"N",Her:"N",Lac:"N",LMi:"N",Lyn:"N",Lyr:"N",
+  Per:"N",Sge:"N",Tri:"N",UMa:"N",UMi:"N",Vul:"N",
+  // Southern only (31)
+  Ant:"S",Aps:"S",Ara:"S",Cae:"S",Car:"S",Cha:"S",Cir:"S",Col:"S",CrA:"S",
+  Cru:"S",Dor:"S",For:"S",Gru:"S",Hor:"S",Hyi:"S",Ind:"S",Lup:"S",Men:"S",
+  Mic:"S",Mus:"S",Nor:"S",Oct:"S",Pav:"S",Pic:"S",Pyx:"S",Ret:"S",Tel:"S",
+  TrA:"S",Tuc:"S",Vel:"S",Vol:"S",
+  // Both / Equatorial (33) - visible from both hemispheres
+  Aqr:"B",Aql:"B",Ari:"B",Cnc:"B",CMa:"B",CMi:"B",Cap:"B",Cen:"B",Cet:"B",
+  Crv:"B",Crt:"B",Eri:"B",Gem:"B",Hya:"B",Leo:"B",Lep:"B",Lib:"B",Mon:"B",
+  Oph:"B",Ori:"B",Peg:"B",Phe:"B",Psc:"B",PsA:"B",Pup:"B",Sgr:"B",Sco:"B",
+  Scl:"B",Sct:"B",Ser:"B",Sex:"B",Tau:"B",Vir:"B"
+};
+function filterConstByHemisphere(list,sub){
+  if(!list||!list.length)return list;
+  if(sub==="northernSky")return list.filter(c=>{
+    if(c.isOverride)return true;
+    var h=CONST_HEMISPHERE[c.id];
+    return h==="N"||h==="B";
+  });
+  if(sub==="southernSky")return list.filter(c=>{
+    if(c.isOverride)return false;
+    var h=CONST_HEMISPHERE[c.id];
+    return h==="S"||h==="B";
+  });
+  return list;
+}
+function nextConstellation(cl,sub){if(!_constDecks[sub]||_constDecks[sub].idx>=_constDecks[sub].deck.length){_constDecks[sub]={deck:shuffle(cl.slice()),idx:0};}return _constDecks[sub].deck[_constDecks[sub].idx++];}
+
+function generateSpaceQuestion(deck,idx,constList,sub){
+  if(!_spaceQDeck||_spaceQDeckIdx>=_spaceQDeck.length){_spaceQDeck=shuffle(deck.slice());_spaceQDeckIdx=0;}
+  var type=_spaceQDeck[_spaceQDeckIdx++];
+  var p,m,c,opts;
+  var cl=filterConstByHemisphere(constList||[],sub);
+  if(type==="planetMoons"){if(!_planetDeck||_planetDeckIdx>=_planetDeck.length){_planetDeck=shuffle(PLANETS.slice());_planetDeckIdx=0;}p=_planetDeck[_planetDeckIdx++];var wm=shuffle([0,1,2,4,12,27,50,80,146].filter(n=>n!==p.moons)).slice(0,3);opts=shuffle([p.moons,...wm]);return{type,question:"How many moons does "+p.name+" have?",bigEmoji:"🪐",options:opts.map(x=>({label:String(x),value:String(x)})),answer:String(p.moons),funFact:p.funFact,display:"text"};}
+  if(type==="moonPlanet"){if(!_moonDeck||_moonDeckIdx>=_moonDeck.length){_moonDeck=shuffle(MOONS.slice());_moonDeckIdx=0;}m=_moonDeck[_moonDeckIdx++];var pn=["Mercury","Venus","Earth","Mars","Jupiter","Saturn","Uranus","Neptune"];var wp=shuffle(pn.filter(n=>n!==m.planet)).slice(0,3);opts=shuffle([m.planet,...wp]);return{type,question:"Which planet does "+m.name+" orbit?",bigEmoji:"🌙",options:opts.map(x=>({label:x,value:x})),answer:m.planet,funFact:m.funFact,display:"text"};}
+  if(cl.length<4){if(!_moonDeck||_moonDeckIdx>=_moonDeck.length){_moonDeck=shuffle(MOONS.slice());_moonDeckIdx=0;}m=_moonDeck[_moonDeckIdx++];var pn2=["Mercury","Venus","Earth","Mars","Jupiter","Saturn","Uranus","Neptune"];var wp2=shuffle(pn2.filter(n=>n!==m.planet)).slice(0,3);opts=shuffle([m.planet,...wp2]);return{type:"moonPlanet",question:"Which planet does "+m.name+" orbit?",bigEmoji:"🌙",options:opts.map(x=>({label:x,value:x})),answer:m.planet,funFact:m.funFact,display:"text"};}
+  if(type==="constellationStarId"){var wn=cl.filter(cc=>cc.namedStars&&cc.namedStars.length>0);if(wn.length>=4){c=nextConstellation(wn,sub+"_star");var star=c.namedStars[Math.floor(Math.random()*c.namedStars.length)];var an=[];wn.forEach(cc=>cc.namedStars.forEach(ns=>{if(ns.name!==star.name)an.push(ns.name);}));var wn2=shuffle([...new Set(an)]).slice(0,3);opts=shuffle([star.name,...wn2]);return{type,question:`In ${c.name}, what is the highlighted star?`,constellationData:c,highlightStarIdx:star.idx,options:opts.map(x=>({label:x,value:x})),answer:star.name,funFact:CONST_FACTS[c.id]||`${c.name} is one of 88 official constellations!`};}}
+  c=nextConstellation(cl,sub+"_id");var wc=shuffle(cl.filter(x=>x.id!==c.id)).slice(0,3);opts=shuffle([c,...wc]);return{type:"constellationId",question:"Which constellation is shown?",constellationData:c,options:opts.map(x=>({label:x.name,value:x.name})),answer:c.name,funFact:CONST_FACTS[c.id]||`${c.name} is one of 88 official constellations!`};
+}
+
+// ═══ BOARD COMPONENTS ═══
+const SPACE_ZONES=[{name:"Launch Pad",range:[1,10],color:"#1a237e",tile:"#283593",emoji:"🚀"},{name:"Inner Planets",range:[11,25],color:"#4a1942",tile:"#6a1b9a",emoji:"🌍"},{name:"Asteroid Belt",range:[26,40],color:"#3e2723",tile:"#5d4037",emoji:"☄️"},{name:"Gas Giants",range:[41,60],color:"#1b5e20",tile:"#2e7d32",emoji:"🪐"},{name:"Ice Giants",range:[61,75],color:"#006064",tile:"#00838f",emoji:"🔵"},{name:"Deep Space",range:[76,90],color:"#0d47a1",tile:"#1565c0",emoji:"🌌"},{name:"Galaxy's Edge",range:[91,100],color:"#4a148c",tile:"#6a1b9a",emoji:"🏆"}];
+function getSpaceZone(p){for(var z of SPACE_ZONES)if(p>=z.range[0]&&p<=z.range[1])return z;return SPACE_ZONES[0];}
+
+function BoardGrid({position,targetPosition,character,onDone,isSpace}){
+  var [disp,setDisp]=useState(position);var timer=useRef(null);
+  useEffect(()=>{setDisp(position);},[position]);
+  useEffect(()=>{if(targetPosition===position)return;var cur=position;function step(){cur=Math.min(cur+1,targetPosition);setDisp(cur);Audio.playMove();if(cur<targetPosition)timer.current=setTimeout(step,110);else setTimeout(onDone,400);}timer.current=setTimeout(step,110);return()=>clearTimeout(timer.current);},[targetPosition]);
+  var zone=isSpace?getSpaceZone(disp):getContinent(disp);
+  var lm=isSpace?{5:"🚀",10:"🌍",15:"☀️",20:"🌙",25:"🔴",30:"☄️",35:"🪐",40:"💫",45:"🪐",50:"⭐",55:"🌌",60:"🔵",65:"❄️",70:"🌠",75:"🌌",80:"🔭",85:"👾",90:"🌟",95:"🛸",100:"🏆"}:{10:"🗽",20:"🌊",30:"🗼",40:"🌍",50:"🕌",60:"🏯",70:"🐋",80:"🦘",90:"🌏",100:"🏆"};
+  var cells=[];for(var r=0;r<10;r++)for(var co=0;co<10;co++)cells.push(r%2===0?r*10+co+1:r*10+(9-co)+1);
+  return(<div style={{borderRadius:16,padding:8,border:"3px solid rgba(255,255,255,0.25)",background:`linear-gradient(135deg,${zone.color}dd,${zone.tile}dd)`,boxShadow:"0 4px 20px rgba(0,0,0,0.5)",transition:"background 0.8s"}}>
+    <div style={{textAlign:"center",fontSize:13,fontWeight:"bold",color:"rgba(255,255,255,0.95)",marginBottom:4}}>{zone.emoji} {zone.name}</div>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(10,1fr)",gap:2}}>
+      {cells.map(n=>{var ip=n===disp,iv=n<disp,l=lm[n];return <div key={n} style={{aspectRatio:"1",borderRadius:3,display:"flex",alignItems:"center",justifyContent:"center",fontSize:ip?16:l?10:8,background:ip?"rgba(255,255,255,0.95)":iv?(zone.tile+"bb"):(zone.tile+"44"),border:ip?"2px solid #fff":"1px solid rgba(255,255,255,0.15)",boxShadow:ip?"0 0 10px rgba(255,255,255,0.9)":"none",transform:ip?"scale(1.25)":"scale(1)",transition:"all 0.15s"}}>{ip?character.emoji:l?l:<span style={{fontSize:7,opacity:iv?.9:.5,color:"white",fontWeight:"bold"}}>{n}</span>}</div>;})}
+    </div>
+    <div style={{textAlign:"center",marginTop:4,fontSize:11,color:"rgba(255,255,255,0.8)",fontWeight:"bold"}}>{isSpace?"Space":"Square"} {disp}/100</div>
+  </div>);
+}
+
+function SpaceBg(){var s=useRef(Array.from({length:60},()=>({l:Math.random()*100,t:Math.random()*100,sz:Math.random()>.87?3:1,o:.3+Math.random()*.6,d:2+Math.random()*3,dl:Math.random()*3})));return(<div style={{position:"fixed",inset:0,zIndex:0,overflow:"hidden",pointerEvents:"none"}}><div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,#020010,#0a0028,#050015)"}}/>{s.current.map((s,i)=><div key={i} style={{position:"absolute",left:s.l+"%",top:s.t+"%",width:s.sz,height:s.sz,borderRadius:"50%",background:"white",opacity:s.o,animation:`tw ${s.d}s ${s.dl}s ease-in-out infinite alternate`}}/>)}<style>{"@keyframes tw{0%{opacity:.2}100%{opacity:1}}"}</style></div>);}
+function GeoBg({name}){var bgs={atlantic:"#0a1a3a,#0d3060",northAmerica:"#0a1628,#1a3a1a",europe:"#1a0a3a,#2d1b5e",africa:"#3a1200,#bf360c",middleEast:"#0a0a1a,#1a1000",asia:"#1a0505,#3a0a0a",australasia:"#0a1a08,#1a3a10",pacific:"#0a1a3a,#0d3060"};var bg=bgs[name]||"#1a1a2e,#16213e";return <div style={{position:"fixed",inset:0,zIndex:0,background:`linear-gradient(180deg,${bg})`}}/>;}
+
+function CelebrationBlast({active}){var cols=["#ff0000","#ff4500","#ff8c00","#ffd700","#adff2f","#00ff7f","#00ced1","#1e90ff","#9400d3","#ff1493"];var p=useRef(Array.from({length:70},(_,i)=>({id:i,c:cols[i%cols.length],l:Math.random()*100,sz:8+Math.floor(Math.random()*12),d:(3+Math.random()*2).toFixed(1),dl:(Math.random()*.8).toFixed(1),r:Math.floor(Math.random()*360),dr:(Math.random()*200-100).toFixed(0),k:["dot","strip","spark"][i%3]})));if(!active)return null;return(<div style={{position:"fixed",inset:0,pointerEvents:"none",overflow:"hidden",zIndex:999}}>{p.current.map(p=><div key={p.id} style={{position:"absolute",top:"-5%",left:p.l+"%",width:p.k==="strip"?4:p.sz,height:p.k==="strip"?p.sz*2.5:p.sz,background:p.c,borderRadius:p.k==="dot"?"50%":2,animation:`cd ${p.d}s ${p.dl}s ease-in forwards`,transform:`rotate(${p.r}deg)`,"--dr":p.dr+"px"}}/>)}<style>{"@keyframes cd{0%{transform:translateY(0) translateX(0) rotate(0);opacity:1}60%{opacity:1}100%{transform:translateY(110vh) translateX(var(--dr)) rotate(720deg);opacity:0}}"}</style></div>);}
+
+function makeAudio(){var ctx=null,mt=false;function gc(){try{if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==="suspended")ctx.resume();return ctx;}catch(e){return null;}}function bp(f,d,v,dl){if(mt)return;var c=gc();if(!c)return;try{var o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type="square";o.frequency.setValueAtTime(f,c.currentTime+(dl||0));g.gain.setValueAtTime(v||.15,c.currentTime+(dl||0));g.gain.exponentialRampToValueAtTime(.001,c.currentTime+(dl||0)+d);o.start(c.currentTime+(dl||0));o.stop(c.currentTime+(dl||0)+d+.01);}catch(e){}}return{playCorrect(){bp(523,.1,.15,0);bp(659,.1,.15,.1);bp(784,.2,.15,.2);},playWrong(){bp(300,.1,.12,0);bp(220,.2,.12,.1);},playSpin(){for(var i=0;i<10;i++)bp(200+i*80,.06,.08,i*.05);},playMove(){bp(440,.05,.06,0);},playWin(){[523,659,784,1047,784,659,523,659,784,1047].forEach((f,i)=>bp(f,.15,.18,i*.12));},toggleMute(){mt=!mt;return mt;},isMuted(){return mt;}};}
+var Audio=makeAudio();
+
+function SpinnerWheel({onResult}){var [ph,setPh]=useState("idle"),[tn,setTn]=useState(null),[ang,setAng]=useState(0),[cel,setCel]=useState(false);var sa=useRef(0),raf=useRef(null),st=useRef(null);var cols=["#FF6B6B","#4ECDC4","#45B7D1","#96CEB4","#FFEAA7","#DDA0DD"];useEffect(()=>()=>{if(raf.current)cancelAnimationFrame(raf.current);},[]);function spin(){if(ph!=="idle")return;var n=Math.floor(Math.random()*6)+1,tot=5*360+(360-((n-1)*60+30))%360,fr=sa.current;setTn(n);setPh("spinning");st.current=null;Audio.playSpin();function ease(t){return 1-Math.pow(1-t,3);}function step(ts){if(!st.current)st.current=ts;var t=Math.min((ts-st.current)/2400,1);setAng(fr+tot*ease(t));if(t<1)raf.current=requestAnimationFrame(step);else{sa.current=(fr+tot)%360;setAng((fr+tot)%360);setPh("done");setCel(true);setTimeout(()=>onResult(n),1000);}}raf.current=requestAnimationFrame(step);}return(<div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}><CelebrationBlast active={cel}/>{ph==="idle"&&<button onClick={spin} style={{padding:"12px 32px",fontSize:18,borderRadius:12,border:"none",background:"linear-gradient(135deg,#FF6B6B,#DDA0DD,#45B7D1)",color:"white",cursor:"pointer",fontWeight:"bold",width:"100%"}}>SPIN! 🎰</button>}{ph==="spinning"&&<div style={{fontSize:14,color:"#aaa",fontStyle:"italic"}}>Spinning...</div>}<div style={{position:"relative",width:150,height:150}}><div style={{position:"absolute",top:-10,left:"50%",transform:"translateX(-50%)",fontSize:22,zIndex:10}}>▼</div><svg width="150" height="150" style={{transform:`rotate(${ang}deg)`,borderRadius:"50%"}}>{[1,2,3,4,5,6].map((n,i)=>{var sA=(i*60-90)*Math.PI/180,eA=((i+1)*60-90)*Math.PI/180,x1=75+72*Math.cos(sA),y1=75+72*Math.sin(sA),x2=75+72*Math.cos(eA),y2=75+72*Math.sin(eA),mA=(sA+eA)/2,tx=75+50*Math.cos(mA),ty=75+50*Math.sin(mA);return <g key={n}><path d={`M75,75 L${x1},${y1} A72,72 0 0,1 ${x2},${y2} Z`} fill={cols[i]} stroke="white" strokeWidth="2"/><text x={tx} y={ty} textAnchor="middle" dominantBaseline="middle" fontSize="18" fontWeight="bold" fill="white">{n}</text></g>;})}<circle cx="75" cy="75" r="9" fill="white" stroke="#333" strokeWidth="2"/></svg></div>{ph==="done"&&tn&&<div style={{fontSize:20,fontWeight:"bold",color:"#FF6B6B",textAlign:"center"}}>Move {tn} spaces! 🎉</div>}</div>);}
+
+function SettingsMenu({onClose,onHome,onRestart}){return(<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center"}} onClick={onClose}><div onClick={e=>e.stopPropagation()} style={{background:"white",borderRadius:20,padding:28,minWidth:260,boxShadow:"0 20px 60px rgba(0,0,0,0.4)",textAlign:"center"}}><div style={{fontSize:32,marginBottom:4}}>⚙️</div><h2 style={{margin:"0 0 16px",color:"#333"}}>Settings</h2><div style={{display:"flex",flexDirection:"column",gap:10}}><button onClick={onRestart} style={{padding:12,fontSize:15,borderRadius:12,border:"none",background:"#4ECDC4",color:"white",cursor:"pointer",fontWeight:"bold"}}>🔄 Restart</button><button onClick={onHome} style={{padding:12,fontSize:15,borderRadius:12,border:"none",background:"#FF6B6B",color:"white",cursor:"pointer",fontWeight:"bold"}}>🏠 Main Menu</button><button onClick={onClose} style={{padding:10,fontSize:13,borderRadius:12,border:"2px solid #ddd",background:"white",color:"#666",cursor:"pointer"}}>✕ Close</button></div></div></div>);}
+
+const BOARD_SIZE=100;
+
+// ═══ MAIN APP ═══
+function OllysGame(){
+  var [screen,setScreen]=useState("start"),[gameMode,setGameMode]=useState("geo"),[spaceSubMode,setSpaceSubMode]=useState("all"),[character,setCharacter]=useState(CHARACTERS[0]),[diffKey,setDiffKey]=useState("worldFlags"),[questionTypes,setQuestionTypes]=useState([]),[currentQ,setCurrentQ]=useState(null),[position,setPosition]=useState(0),[targetPos,setTargetPos]=useState(0),[moving,setMoving]=useState(false),[selected,setSelected]=useState(null),[showResult,setShowResult]=useState(false),[score,setScore]=useState(0),[total,setTotal]=useState(0),[showSettings,setShowSettings]=useState(false),[muted,setMuted]=useState(false),[worldData,setWorldData]=useState(null),[usData,setUsData]=useState(null),[constList,setConstList]=useState([]),[constLoading,setConstLoading]=useState(false);
+  var cDecks=useRef({}),sDecks=useRef({}),spaceDeck=useRef([]),spaceIdx=useRef({v:0});
+
+  // FIX #1: win audio fires exactly once
+  useEffect(()=>{if(screen==="win")Audio.playWin();},[screen]);
+
+  useEffect(()=>{
+    fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(r=>r.json()).then(setWorldData).catch(()=>{});
+    fetch("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json").then(r=>r.json()).then(setUsData).catch(()=>{});
+  },[]);
+  useEffect(()=>{setConstLoading(true);loadConstellationData().then(l=>{setConstList(l);setConstLoading(false);});},[]);
+
+  function startGame(mode,sub){
+    var m=mode||gameMode,sm=sub||spaceSubMode;setGameMode(m);setSpaceSubMode(sm);
+    cDecks.current={};sDecks.current={};_constDecks={};_spaceQDeck=null;_spaceQDeckIdx=0;_planetDeck=null;_planetDeckIdx=0;_moonDeck=null;_moonDeckIdx=0;
+    if(m==="space"){var qt=(sm==="northernSky"||sm==="southernSky")?SPACE_Q_CONST:SPACE_Q_ALL;spaceDeck.current=shuffle(qt.concat(qt).concat(qt));spaceIdx.current={v:0};setCurrentQ(generateSpaceQuestion(spaceDeck.current,spaceIdx.current,constList,sm));setQuestionTypes([]);}
+    else{var types=makeGeoQuestionPool(diffKey);setQuestionTypes(types);setCurrentQ(generateGeoQuestion(types,cDecks.current,sDecks.current));}
+    setPosition(0);setTargetPos(0);setSelected(null);setShowResult(false);setScore(0);setTotal(0);setMoving(false);setScreen("game");
+  }
+  function advanceQuestion(){var q;if(gameMode==="space")q=generateSpaceQuestion(spaceDeck.current,spaceIdx.current,constList,spaceSubMode);else q=generateGeoQuestion(questionTypes,cDecks.current,sDecks.current);setCurrentQ(q);setSelected(null);setShowResult(false);}
+  var q=currentQ,isCorrect=selected===(q&&q.answer),isSpace=gameMode==="space";
+  function handleAnswer(v){if(selected||moving)return;setSelected(v);setShowResult(true);setTotal(t=>t+1);if(v===q.answer){setScore(s=>s+1);Audio.playCorrect();}else Audio.playWrong();}
+  function handleSpin(n){setTargetPos(Math.min(position+n,BOARD_SIZE));setMoving(true);}
+  function handleMoveDone(){var np=targetPos;setPosition(np);setMoving(false);if(np>=BOARD_SIZE){setScreen("win");return;}setTimeout(advanceQuestion,300);}
+
+  // FIX #5: map loading placeholder
+  var MapLoading=<div style={{height:100,display:"flex",alignItems:"center",justifyContent:"center",color:"#bbb",fontSize:14,borderRadius:10,border:"2px dashed #ddd",marginBottom:8}}>🗺️ Map loading...</div>;
+  function QMedia({q:q}){return(<>{q.constellationData&&<div style={{marginBottom:8,display:"flex",justifyContent:"center"}}><ConstellationSvg constellation={q.constellationData} highlightIdx={q.highlightStarIdx}/></div>}{q.countryHighlight&&(worldData?<WorldMap highlight={q.countryHighlight} worldData={worldData}/>:MapLoading)}{q.countrySilhouette&&(worldData?<CountryShape country={q.countrySilhouette} worldData={worldData}/>:MapLoading)}{q.stateShapeName&&(usData?<StateShape stateName={q.stateShapeName} usData={usData}/>:MapLoading)}{q.bigEmoji&&!q.constellationData&&!q.countryHighlight&&!q.countrySilhouette&&!q.stateShapeName&&<div style={{textAlign:"center",fontSize:64,marginBottom:8,lineHeight:1}}>{q.bigEmoji}</div>}</>);}
+
+  if(screen==="start"){
+    var nC=filterConstByHemisphere(constList,"northernSky").length,sC=filterConstByHemisphere(constList,"southernSky").length;
+    var modes=[{mode:"geo",sub:"worldFlags",emoji:"🌍",label:"World Flags",desc:"Flags of countries around the world"},{mode:"geo",sub:"countryMap",emoji:"🗺️",label:"Name That Country",desc:"Identify countries on the map"},{mode:"geo",sub:"all",emoji:"📚",label:"All Geography",desc:"Flags, Countries, and States"},{mode:"space",sub:"all",emoji:"🪐",label:"Space",desc:"Planets, moons & constellations"},{mode:"space",sub:"northernSky",emoji:"⭐",label:"Northern Sky",desc:`${nC||44} constellations visible from the north`},{mode:"space",sub:"southernSky",emoji:"🌟",label:"Southern Sky",desc:`${sC||44} constellations visible from the south`}];
+    return(<div style={{minHeight:"100vh",background:"linear-gradient(135deg,#0a0020,#1a0040,#0d0030)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"sans-serif",position:"relative",overflow:"hidden"}}>
+      <button onClick={()=>{setMuted(Audio.toggleMute());}} style={{position:"fixed",top:12,right:12,zIndex:50,fontSize:22,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer"}}>{muted?"🔇":"🔊"}</button>
+      <div style={{background:"rgba(255,255,255,0.97)",borderRadius:24,padding:"28px 22px",textAlign:"center",maxWidth:420,width:"92%",boxShadow:"0 20px 60px rgba(0,0,0,0.7)",position:"relative",zIndex:1}}>
+        <div style={{fontSize:48,marginBottom:4}}>🌍🚀🌌</div>
+        <h1 style={{fontSize:28,color:"#333",margin:"0 0 2px"}}>Olly's Game</h1>
+        <p style={{color:"#888",fontSize:12,marginBottom:20}}>Reach space 100 to win!</p>
+        <p style={{fontWeight:"bold",color:"#333",marginBottom:8,fontSize:13}}>Pick your traveller:</p>
+        <div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center",marginBottom:22}}>{CHARACTERS.map(c=><button key={c.emoji} onClick={()=>setCharacter(c)} style={{fontSize:24,background:character.emoji===c.emoji?c.color:"#f0f0f0",border:character.emoji===c.emoji?`3px solid ${c.border}`:"3px solid transparent",borderRadius:10,padding:"5px 8px",cursor:"pointer"}}>{c.emoji}</button>)}</div>
+        <p style={{fontWeight:"bold",color:"#333",marginBottom:8,fontSize:13}}>Choose your game:</p>
+        <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:20}}>{modes.map(m=>{var act=(gameMode===m.mode)&&((m.mode==="geo"&&diffKey===m.sub)||(m.mode==="space"&&spaceSubMode===m.sub));var isSp=m.mode==="space";return(<button key={m.label} onClick={()=>{setGameMode(m.mode);if(m.mode==="geo")setDiffKey(m.sub);else setSpaceSubMode(m.sub);}} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",borderRadius:10,border:act?`2px solid ${isSp?"#6a1b9a":"#2980b9"}`:"2px solid #e0e0e0",background:act?(isSp?"linear-gradient(135deg,#6a1b9a,#4a148c)":"linear-gradient(135deg,#2980b9,#1a5f8a)"):"#f8f8f8",color:act?"white":"#333",cursor:"pointer",textAlign:"left"}}><span style={{fontSize:20,minWidth:26,textAlign:"center"}}>{m.emoji}</span><div><div style={{fontSize:13,fontWeight:"bold",lineHeight:1.2}}>{m.label}</div><div style={{fontSize:10,opacity:act?.85:.55,marginTop:1}}>{m.desc}</div></div></button>);})}</div>
+        {constLoading&&gameMode==="space"&&<div style={{fontSize:11,color:"#999",marginBottom:8}}>Loading constellation data...</div>}
+        <button onClick={()=>startGame(gameMode,spaceSubMode)} disabled={gameMode==="space"&&constLoading} style={{padding:"12px 44px",fontSize:18,borderRadius:14,border:"none",background:gameMode==="space"&&constLoading?"#ccc":gameMode==="space"?"linear-gradient(135deg,#6a1b9a,#9c27b0)":"linear-gradient(135deg,#FF6B6B,#FF8E53)",color:"white",cursor:gameMode==="space"&&constLoading?"not-allowed":"pointer",fontWeight:"bold"}}>{gameMode==="space"&&constLoading?"Loading stars... ⏳":gameMode==="space"?"Blast Off! 🚀":"Let's Go! 🌍"}</button>
+      </div></div>);
+  }
+  if(screen==="win"){return(<div style={{minHeight:"100vh",background:isSpace?"linear-gradient(135deg,#0a0020,#4a148c,#1a0040)":"linear-gradient(135deg,#f6d365,#fda085)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"sans-serif"}}><CelebrationBlast active/>{isSpace&&<SpaceBg/>}<div style={{background:"white",borderRadius:24,padding:40,textAlign:"center",maxWidth:400,boxShadow:"0 20px 60px rgba(0,0,0,0.3)",zIndex:10,position:"relative"}}><div style={{fontSize:80}}>🏆</div><h1 style={{fontSize:28,color:"#333"}}>{isSpace?"Mission Complete!":"You Win!"} {character.emoji}</h1><p style={{fontSize:16,color:"#666"}}>Score: <strong style={{fontSize:22,color:"#27ae60"}}>{score}</strong> / <strong>{total}</strong></p><button onClick={()=>setScreen("start")} style={{marginTop:20,padding:"14px 40px",fontSize:18,borderRadius:16,border:"none",background:isSpace?"linear-gradient(135deg,#6a1b9a,#9c27b0)":"linear-gradient(135deg,#FF6B6B,#FF8E53)",color:"white",cursor:"pointer",fontWeight:"bold"}}>Play Again! 🚀</button></div></div>);}
+
+  var cont=isSpace?null:getContinent(position);
+  return(<div style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)",fontFamily:"sans-serif",padding:12,position:"relative"}}>
+    {isSpace?<SpaceBg/>:<GeoBg name={cont.bg}/>}
+    {showSettings&&<SettingsMenu onClose={()=>setShowSettings(false)} onHome={()=>{setShowSettings(false);setScreen("start");}} onRestart={()=>{setShowSettings(false);startGame(gameMode,spaceSubMode);}}/>}
+    <button onClick={()=>setShowSettings(true)} style={{position:"fixed",top:12,left:12,zIndex:50,fontSize:22,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer"}}>⚙️</button>
+    <button onClick={()=>setMuted(Audio.toggleMute())} style={{position:"fixed",top:12,left:64,zIndex:50,fontSize:22,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer"}}>{muted?"🔇":"🔊"}</button>
+    <div style={{maxWidth:520,margin:"0 auto",position:"relative",zIndex:1}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,gap:6,paddingLeft:120}}>{[`${character.emoji} ${position}/100`,`Score: ${score}/${total}`].map(t=><div key={t} style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"5px 10px",color:"white",fontWeight:"bold",fontSize:13,flex:1,textAlign:"center"}}>{t}</div>)}</div>
+      <BoardGrid position={position} targetPosition={targetPos} character={character} onDone={handleMoveDone} isSpace={isSpace}/>
+      <div style={{marginTop:10}}>
+        {q&&!moving&&(<div style={{background:"rgba(255,255,255,0.97)",borderRadius:20,padding:16,boxShadow:"0 8px 32px rgba(0,0,0,0.4)"}}>
+          {showResult&&isCorrect&&(<div style={{textAlign:"center",marginBottom:12}}><p style={{color:"#27ae60",fontWeight:"bold",fontSize:18,marginBottom:8}}>🎉 Correct!</p><SpinnerWheel onResult={handleSpin}/>{q.funFact&&<div style={{marginTop:10,padding:"8px 12px",background:"#f0f8ff",borderRadius:10,border:"2px solid #b3d9ff",fontSize:13,color:"#1a5f8a",textAlign:"center"}}>💡 {q.funFact}</div>}<div style={{marginTop:10,display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>{q.options.map(o=>{var bg2=o.value===q.answer?"#C8F7C5":"#f5f5f5",brd=o.value===q.answer?"2px solid #27ae60":"2px solid #e0e0e0";return <div key={o.value} style={{padding:q.display==="bigflag"?"10px 4px":"8px 6px",fontSize:q.display==="bigflag"?32:13,borderRadius:10,border:brd,background:bg2,color:o.value===q.answer?"#1a7a40":"#aaa",fontWeight:o.value===q.answer?"bold":"normal",textAlign:"center"}}>{o.label}</div>;})}</div></div>)}
+          {!showResult&&(<div><QMedia q={q}/><p style={{fontSize:15,fontWeight:"bold",color:"#333",textAlign:"center",marginBottom:12,lineHeight:1.4}}>{q.question}</p><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>{q.options.map(o=><button key={o.value} onClick={()=>handleAnswer(o.value)} style={{padding:q.display==="bigflag"?"16px 8px":"12px 8px",fontSize:q.display==="bigflag"?40:13,borderRadius:12,border:"2px solid #e0e0e0",background:"white",color:"#333",cursor:"pointer",fontWeight:"bold",lineHeight:1.3}}>{o.label}</button>)}</div></div>)}
+          {showResult&&!isCorrect&&(<div><QMedia q={q}/><p style={{fontSize:15,fontWeight:"bold",color:"#333",textAlign:"center",marginBottom:10}}>{q.question}</p><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>{q.options.map(o=>{var bg2="white",brd="2px solid #e0e0e0";if(o.value===q.answer){bg2="#C8F7C5";brd="2px solid #27ae60";}else if(o.value===selected){bg2="#FADBD8";brd="2px solid #e74c3c";}return <button key={o.value} disabled style={{padding:q.display==="bigflag"?"16px 8px":"12px 8px",fontSize:q.display==="bigflag"?40:13,borderRadius:12,border:brd,background:bg2,color:"#333",fontWeight:"bold",lineHeight:1.3}}>{o.label}</button>;})}</div>{q.funFact&&<div style={{marginBottom:10,padding:"8px 12px",background:"#fff8e1",borderRadius:10,border:"2px solid #ffe082",fontSize:13,color:"#7a5a00",textAlign:"center"}}>💡 {q.funFact}</div>}<p style={{color:"#e74c3c",fontWeight:"bold",fontSize:15,textAlign:"center",marginBottom:4}}>Not quite! Keep going!</p><p style={{color:"#27ae60",fontSize:13,marginBottom:10,textAlign:"center"}}>Answer: <strong>{q.answer}</strong></p><button onClick={advanceQuestion} style={{padding:"11px 28px",fontSize:15,borderRadius:12,border:"none",background:"#FF6B6B",color:"white",cursor:"pointer",fontWeight:"bold",width:"100%"}}>Next Question</button></div>)}
+        </div>)}
+        {moving&&<div style={{textAlign:"center",color:"white",fontSize:20,fontWeight:"bold",marginTop:20}}>{character.emoji} {isSpace?"Zooming through space... 🚀":"Moving... 🌍"}</div>}
+      </div>
+    </div>
+  </div>);
+}
+
+// ── Mount the app ──
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<OllysGame/>);
+</script>
+</body>
+</html>
