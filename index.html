@@ -20,6 +20,10 @@
       .gs-board-grid{gap:1px!important;}
       .gs-tile{aspect-ratio:unset!important;height:22px!important;}
       .gs-board-footer{display:none!important;}
+      /* Question mode: board hides, question fills screen */
+      .gs-root.gs-mode-question .gs-board{display:none!important;}
+      /* Board mode: board visible during animation */
+      .gs-root.gs-mode-board .gs-board{display:block!important;}
       .gs-const-svg{width:220px!important;height:175px!important;}
       .gs-map-wrap{max-height:180px!important;overflow:hidden!important;}
       .gs-country-shape svg,.gs-state-shape svg{width:220px!important;height:150px!important;}
