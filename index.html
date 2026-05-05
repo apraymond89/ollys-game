@@ -15,13 +15,11 @@
       .gs-root{height:100svh;min-height:unset!important;overflow:hidden!important;padding:6px!important;display:flex!important;flex-direction:column;}
       .gs-inner{flex:1;min-height:0;display:flex!important;flex-direction:column!important;overflow:hidden;}
       /* Board */
-      .gs-board{padding:3px!important;flex-shrink:0!important;}
+      .gs-board{padding:3px!important;}
       .gs-board-name{font-size:11px!important;margin-bottom:1px!important;}
       .gs-board-grid{gap:1px!important;}
       .gs-tile{aspect-ratio:unset!important;height:22px!important;}
       .gs-board-footer{display:none!important;}
-      .gs-root.gs-mode-question .gs-board{display:none!important;}
-      .gs-root.gs-mode-board .gs-board{display:block!important;}
       .gs-const-svg{width:220px!important;height:175px!important;}
       .gs-map-wrap{max-height:180px!important;overflow:hidden!important;}
       .gs-country-shape svg,.gs-state-shape svg{width:220px!important;height:150px!important;}
@@ -356,6 +354,7 @@ function OllysGame(){
       <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
         <button onClick={()=>setShowSettings(true)} style={{fontSize:22,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer",flexShrink:0}}>⚙️</button>
         <button onClick={()=>setMuted(Audio.toggleMute())} style={{fontSize:22,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer",flexShrink:0}}>{muted?"🔇":"🔊"}</button>
+        <div style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"5px 10px",color:"white",fontWeight:"bold",fontSize:13,whiteSpace:"nowrap"}}>{isSpace?"🚀":cont?cont.emoji:"🌍"} {position}/100</div>
         <div style={{flex:1,background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"5px 10px",color:"white",fontWeight:"bold",fontSize:13,textAlign:"center"}}>Score: {score}/{total}</div>
       </div>
       <div className="gs-zone-status" style={{flexDirection:"column",gap:4,background:"rgba(255,255,255,0.13)",borderRadius:12,padding:"7px 14px",marginBottom:4}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:"bold",fontSize:15,color:"white"}}>{zone.emoji} {zone.name}</span><span style={{fontSize:12,color:"rgba(255,255,255,0.8)"}}>{position}/100</span></div><div style={{background:"rgba(255,255,255,0.2)",borderRadius:3,height:5,marginTop:5,overflow:"hidden"}}><div style={{background:"rgba(255,255,255,0.85)",height:"100%",width:Math.max(position,1)+"%",borderRadius:3,transition:"width 0.6s ease"}}/></div></div>
