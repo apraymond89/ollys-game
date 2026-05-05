@@ -9,7 +9,7 @@
     body{background:#0a0020;font-family:sans-serif;}
     #root{min-height:100vh;}
   </style>
-  <!-- CDN dependencies — no build step needed -->
+  <!-- CDN dependencies — no build step neded -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
@@ -137,6 +137,8 @@ async function loadConstellationData(){
       var named=[];stars.forEach((s,si)=>{var bd=1.5,bn=null;Object.values(sm).forEach(st=>{if(!st.name)return;var d=Math.sqrt(Math.pow(st.lon-s.lon,2)+Math.pow(st.lat-s.lat,2));if(d<bd){bd=d;bn=st.name;}});if(bn)named.push({idx:si,name:bn});});
       return{id,name:n.name,en:n.en,stars,lines,namedStars:named};
     }).filter(c=>c.stars.length>=2);
+    // Deduplicate by id — d3-celestial has two "Ser" features (Caput + Cauda); keep first only
+    var _seen=new Set();_constellationsList=_constellationsList.filter(c=>{if(_seen.has(c.id))return false;_seen.add(c.id);return true;});
     _constellationsReady=true;return _constellationsList;
   }catch(e){console.error("Constellation load error:",e);return[];}
 }
