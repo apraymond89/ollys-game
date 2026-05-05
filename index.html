@@ -15,7 +15,7 @@
       .gs-root{height:100svh;min-height:unset!important;overflow:hidden!important;padding:6px!important;display:flex!important;flex-direction:column;}
       .gs-inner{flex:1;min-height:0;display:flex!important;flex-direction:column!important;overflow:hidden;}
       /* Board */
-      .gs-board{padding:3px!important;}
+      .gs-board{padding:3px!important;flex-shrink:0!important;}
       .gs-board-name{font-size:11px!important;margin-bottom:1px!important;}
       .gs-board-grid{gap:1px!important;}
       .gs-tile{aspect-ratio:unset!important;height:22px!important;}
@@ -352,10 +352,12 @@ function OllysGame(){
   return(<div className={`gs-root${moving?' gs-mode-board':' gs-mode-question'}`} style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)",fontFamily:"sans-serif",padding:12,position:"relative"}}>
     {isSpace?<SpaceBg/>:<GeoBg name={cont.bg}/>}
     {showSettings&&<SettingsMenu onClose={()=>setShowSettings(false)} onHome={()=>{setShowSettings(false);setScreen("start");}} onRestart={()=>{setShowSettings(false);startGame(gameMode,spaceSubMode);}}/>}
-    <button onClick={()=>setShowSettings(true)} style={{position:"fixed",top:12,left:12,zIndex:50,fontSize:22,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer"}}>⚙️</button>
-    <button onClick={()=>setMuted(Audio.toggleMute())} style={{position:"fixed",top:12,left:64,zIndex:50,fontSize:22,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer"}}>{muted?"🔇":"🔊"}</button>
     <div className="gs-inner" style={{maxWidth:520,margin:"0 auto",position:"relative",zIndex:1}}>
-      <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,gap:6,paddingLeft:120}}>{[`Score: ${score}/${total}`].map(t=><div key={t} style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"5px 10px",color:"white",fontWeight:"bold",fontSize:13,flex:1,textAlign:"center"}}>{t}</div>)}</div>
+      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
+        <button onClick={()=>setShowSettings(true)} style={{fontSize:22,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer",flexShrink:0}}>⚙️</button>
+        <button onClick={()=>setMuted(Audio.toggleMute())} style={{fontSize:22,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer",flexShrink:0}}>{muted?"🔇":"🔊"}</button>
+        <div style={{flex:1,background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"5px 10px",color:"white",fontWeight:"bold",fontSize:13,textAlign:"center"}}>Score: {score}/{total}</div>
+      </div>
       <div className="gs-zone-status" style={{flexDirection:"column",gap:4,background:"rgba(255,255,255,0.13)",borderRadius:12,padding:"7px 14px",marginBottom:4}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:"bold",fontSize:15,color:"white"}}>{zone.emoji} {zone.name}</span><span style={{fontSize:12,color:"rgba(255,255,255,0.8)"}}>{position}/100</span></div><div style={{background:"rgba(255,255,255,0.2)",borderRadius:3,height:5,marginTop:5,overflow:"hidden"}}><div style={{background:"rgba(255,255,255,0.85)",height:"100%",width:Math.max(position,1)+"%",borderRadius:3,transition:"width 0.6s ease"}}/></div></div>
       <BoardGrid position={position} targetPosition={targetPos} character={character} onDone={handleMoveDone} isSpace={isSpace}/>
       <div ref={questionWrapRef} className="gs-question-wrap" style={{marginTop:10}}>
