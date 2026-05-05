@@ -8,6 +8,7 @@
     *{box-sizing:border-box;margin:0;padding:0;}
     body{background:#0a0020;font-family:sans-serif;}
     #root{min-height:100vh;}
+    .gs-zone-status{display:none;}
     /* ── Mobile layout: fit everything in one screen ── */
     @media(max-width:600px){
       /* Game screen */
@@ -41,6 +42,7 @@
       .gs-mode-desc{display:none!important;}
       .gs-mode-btn{padding:7px 10px!important;}
       .gs-start-btn{padding:10px 32px!important;font-size:16px!important;}
+      .gs-root.gs-mode-question .gs-zone-status{display:flex!important;}
     }
       .gs-inner{flex:1;min-height:0;display:flex!important;flex-direction:column!important;overflow:hidden;}
       .gs-board{padding:3px!important;}
@@ -338,7 +340,7 @@ function OllysGame(){
   }
   if(screen==="win"){return(<div style={{minHeight:"100vh",background:isSpace?"linear-gradient(135deg,#0a0020,#4a148c,#1a0040)":"linear-gradient(135deg,#f6d365,#fda085)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"sans-serif"}}><CelebrationBlast active/>{isSpace&&<SpaceBg/>}<div style={{background:"white",borderRadius:24,padding:40,textAlign:"center",maxWidth:400,boxShadow:"0 20px 60px rgba(0,0,0,0.3)",zIndex:10,position:"relative"}}><div style={{fontSize:80}}>🏆</div><h1 style={{fontSize:28,color:"#333"}}>{isSpace?"Mission Complete!":"You Win!"} {character.emoji}</h1><p style={{fontSize:16,color:"#666"}}>Score: <strong style={{fontSize:22,color:"#27ae60"}}>{score}</strong> / <strong>{total}</strong></p><button onClick={()=>setScreen("start")} style={{marginTop:20,padding:"14px 40px",fontSize:18,borderRadius:16,border:"none",background:isSpace?"linear-gradient(135deg,#6a1b9a,#9c27b0)":"linear-gradient(135deg,#FF6B6B,#FF8E53)",color:"white",cursor:"pointer",fontWeight:"bold"}}>Play Again! 🚀</button></div></div>);}
 
-  var cont=isSpace?null:getContinent(position);
+  var cont=isSpace?null:getContinent(position);var zone=isSpace?getSpaceZone(position):cont;
   return(<div className={`gs-root${moving?' gs-mode-board':' gs-mode-question'}`} style={{minHeight:"100vh",background:"linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)",fontFamily:"sans-serif",padding:12,position:"relative"}}>
     {isSpace?<SpaceBg/>:<GeoBg name={cont.bg}/>}
     {showSettings&&<SettingsMenu onClose={()=>setShowSettings(false)} onHome={()=>{setShowSettings(false);setScreen("start");}} onRestart={()=>{setShowSettings(false);startGame(gameMode,spaceSubMode);}}/>}
@@ -346,6 +348,7 @@ function OllysGame(){
     <button onClick={()=>setMuted(Audio.toggleMute())} style={{position:"fixed",top:12,left:64,zIndex:50,fontSize:22,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,padding:"6px 10px",cursor:"pointer"}}>{muted?"🔇":"🔊"}</button>
     <div className="gs-inner" style={{maxWidth:520,margin:"0 auto",position:"relative",zIndex:1}}>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:10,gap:6,paddingLeft:120}}>{[`${character.emoji} ${position}/100`,`Score: ${score}/${total}`].map(t=><div key={t} style={{background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"5px 10px",color:"white",fontWeight:"bold",fontSize:13,flex:1,textAlign:"center"}}>{t}</div>)}</div>
+      <div className="gs-zone-status" style={{flexDirection:"column",gap:4,background:"rgba(255,255,255,0.13)",borderRadius:12,padding:"7px 14px",marginBottom:4}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><span style={{fontWeight:"bold",fontSize:15,color:"white"}}>{zone.emoji} {zone.name}</span><span style={{fontSize:12,color:"rgba(255,255,255,0.8)"}}>{position}/100</span></div><div style={{background:"rgba(255,255,255,0.2)",borderRadius:3,height:5,marginTop:5,overflow:"hidden"}}><div style={{background:"rgba(255,255,255,0.85)",height:"100%",width:Math.max(position,1)+"%",borderRadius:3,transition:"width 0.6s ease"}}/></div></div>
       <BoardGrid position={position} targetPosition={targetPos} character={character} onDone={handleMoveDone} isSpace={isSpace}/>
       <div ref={questionWrapRef} className="gs-question-wrap" style={{marginTop:10}}>
         {q&&!moving&&(<div className="gs-question-card" style={{background:"rgba(255,255,255,0.97)",borderRadius:20,padding:16,boxShadow:"0 8px 32px rgba(0,0,0,0.4)"}}>
